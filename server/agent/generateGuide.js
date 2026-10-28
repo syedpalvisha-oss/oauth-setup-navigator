@@ -322,7 +322,7 @@ export async function generateGuide(input, { onProgress = noop, refresh = false 
 
   // Stages 1-5 are independent (each only needs the app name), so they run together. Each Groq model has its own
   // TPM bucket and llm.js queues calls against it, so running them concurrently does not cause 429s.
-  // They are split across both Groq models (1,3,5 on 20b; 2,4 on 120b) so no single bucket carries all five.
+  // They are split across both Groq models (1,3,4,5 on 20b; 2 on 120b) so no single bucket carries all five.
 
   // 1. Developer portal
   const pPortal = stage(0, {
@@ -352,7 +352,7 @@ JSON shape: {"summary": string, "setup_time": string, "approval_wait": string, "
 
   // 4. Real-world friction
   const pFriction = stage(3, {
-    model: GROQ_MODEL,
+    model: GROQ_FAST_MODEL,
     queries: [`${name} OAuth app rejected approval problems stackoverflow reddit`, `${name} OAuth invalid redirect_uri invalid scope error github issue`],
     prompt: `For ${subject}, look for real-world friction setting up and getting OAuth apps approved: forum threads, GitHub issues, Stack Overflow questions, rejection reasons and gotchas. Summarize the recurring problems and how people resolved them. These are anecdotal, so say where each came from and treat them as unverified unless an official page confirms them.
 JSON shape: {"summary": string, "issues": [{"problem": string, "resolution": string|null, "source": string}]}`,
@@ -409,8 +409,8 @@ JSON shape: {"available": true|false|null, "notes": string, "source_url": string
 
 // Stage 7 runs on the large model, whose free-tier budget is ~8k tokens/minute INCLUDING the answer (~2-3k for a guide).
 // So the prompt must stay around 4-5k tokens: excerpts only for URLs the research stages actually cited, capped per URL.
-const EXCERPT_BUDGET = 4500; // chars of page text handed to stage 7
-const EXCERPT_PER_URL = 900;
+const EXCERPT_BUDGET = 6000; // chars of page text handed to stage 7
+const EXCERPT_PER_URL = 1500;
 const MAX_URL_LIST = 40;
 const FRICTION_ISSUES_KEPT = 4;
 const UNOFFICIAL_HOST = /(^|\.)(stackoverflow|stackexchange|reddit|medium|quora|dev)\.(com|to)$/i;
