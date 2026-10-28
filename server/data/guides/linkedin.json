@@ -1,0 +1,171 @@
+{
+  "app": { "name": "LinkedIn", "website": "https://www.linkedin.com", "category": "social" },
+  "tier": "instant",
+  "product_tiers": [
+    {
+      "product": "Sign In with LinkedIn using OpenID Connect",
+      "tier": "instant",
+      "notes": "Self-serve from the Products tab (openid, profile, email)."
+    },
+    {
+      "product": "Share on LinkedIn",
+      "tier": "instant",
+      "notes": "Self-serve from the Products tab (w_member_social): post, comment and like as the authenticated member."
+    },
+    {
+      "product": "Community Management API / Marketing (Advertising) APIs",
+      "tier": "partner_gated",
+      "notes": "Requires an access request and approval from LinkedIn. Advertising API is requested via the Products tab; approval timelines were not found. Community Management API access details were not verified against docs."
+    }
+  ],
+  "summary": "Top-level tier is 'instant' because most agent builders only need member sign-in and posting on the member's behalf, both self-serve in about 15 minutes after a LinkedIn Page admin verifies the app; managing company pages or ads (Community Management / Marketing APIs) is partner_gated and needs a LinkedIn access request.",
+  "time": {
+    "setup_minutes_estimate": 15,
+    "approval_wait": {
+      "min_days": 0,
+      "max_days": 0,
+      "notes": "Open products (Sign in with LinkedIn using OpenID Connect, Share on LinkedIn) are enabled by self-service. For Advertising API, Sales Navigator and Talent programs approval is required and no timeline was found; Compliance is closed."
+    }
+  },
+  "prerequisites": [
+    { "item": "LinkedIn account", "required": true, "notes": "Needed to sign in to the Developer Portal." },
+    { "item": "LinkedIn Page for the app", "required": true, "notes": "An app is associated with a Page. Whether a Page is mandatory at creation was not confirmed in the pages checked." },
+    { "item": "Page super admin verification", "required": true, "notes": "In app Settings click Verify to generate a URL for the Page super admin to approve. The link expires within 30 days." },
+    { "item": "Privacy policy URL and logo", "required": false, "notes": "Commonly requested at app creation; not confirmed in the pages checked." }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Create the app in the Developer Portal",
+      "detail": "Create an app, associating it with your LinkedIn Page, and complete the required app details.",
+      "owner": "developer",
+      "url": "https://www.linkedin.com/developers/apps"
+    },
+    {
+      "order": 2,
+      "title": "Verify the app with the Page admin",
+      "detail": "In the app's Settings tab click Verify and send the generated URL to the Page super admin to approve.",
+      "owner": "developer",
+      "url": "https://www.linkedin.com/help/linkedin/answer/a1665329"
+    },
+    {
+      "order": 3,
+      "title": "Add self-serve products",
+      "detail": "On the Products tab add 'Sign in with LinkedIn using OpenID Connect' and/or 'Share on LinkedIn'.",
+      "owner": "developer",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    },
+    {
+      "order": 4,
+      "title": "Configure redirect URLs and store credentials",
+      "detail": "On the Auth tab add authorized redirect URLs and copy the Client ID and Client Secret into server-side environment variables.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "order": 5,
+      "title": "Implement the authorization code flow",
+      "detail": "Use the 3-legged flow with the openid, profile, email scopes for sign-in, and w_member_social for posting.",
+      "owner": "agent",
+      "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2"
+    },
+    {
+      "order": 6,
+      "title": "Apply for partner programs if needed",
+      "detail": "For Advertising API add the product and apply; Sales Navigator (SNAP) and Talent require partner applications.",
+      "owner": "developer",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    }
+  ],
+  "scopes": [
+    { "scope": "openid", "purpose": "OpenID Connect sign-in.", "triggers_review": false, "notes": "Part of Sign in with LinkedIn using OpenID Connect." },
+    { "scope": "profile", "purpose": "Member's name, headline and photo.", "triggers_review": false, "notes": "Open permission via the Sign in product." },
+    { "scope": "email", "purpose": "Member's primary email address.", "triggers_review": false, "notes": "Open permission via the Sign in product." },
+    { "scope": "w_member_social", "purpose": "Post, comment and like on behalf of a member.", "triggers_review": false, "notes": "Open permission via the Share on LinkedIn product." },
+    { "scope": "Advertising API permissions", "purpose": "Manage ad accounts and campaigns.", "triggers_review": true, "notes": "Must be approved; apply through the Products tab." }
+  ],
+  "blockers": [
+    {
+      "issue": "Page super admin has not approved the app verification request.",
+      "how_to_resolve": "Re-send the verification URL; it expires earlier than 30 days only if an admin denies it, and a denial requires generating a new request."
+    },
+    {
+      "issue": "You need profile data beyond name, headline, photo and email, or non-posting APIs.",
+      "how_to_resolve": "Most permissions need explicit LinkedIn approval via partner programs; Compliance access is closed. Scope the product to open permissions."
+    },
+    {
+      "issue": "Sign In with LinkedIn v1 product no longer works for new integrations.",
+      "how_to_resolve": "Use the OpenID Connect version; v1 was deprecated on August 1, 2023 per a search snippet of LinkedIn's docs."
+    }
+  ],
+  "agent_can_do": [
+    "Draft the verification request message for the Page admin",
+    "Implement the OAuth flow and OpenID Connect ID token handling",
+    "Pick the minimal products and scopes for the use case",
+    "Draft partner program applications"
+  ],
+  "developer_must_do": [
+    "Create the app and associate it with a LinkedIn Page",
+    "Get a Page super admin to approve verification",
+    "Enable products from the Products tab",
+    "Submit and follow up on partner program applications"
+  ],
+  "claims_evidence": [
+    {
+      "claim": "Open permissions (profile, email via Sign in with LinkedIn using OpenID Connect; w_member_social via Share on LinkedIn) are available to all developers via self-service on the Products tab.",
+      "confidence": "sourced",
+      "source_url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    },
+    {
+      "claim": "Most other permissions and partner programs require explicit approval from LinkedIn; Compliance access is closed.",
+      "confidence": "sourced",
+      "source_url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    },
+    {
+      "claim": "Advertising API access must be approved via the Products tab; Sales Navigator (SNAP) and Talent integrations require partner applications.",
+      "confidence": "sourced",
+      "source_url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    },
+    {
+      "claim": "Page verification: the app's Settings tab generates a URL for a Page super admin to approve; the URL stays valid up to 30 days unless denied.",
+      "confidence": "sourced",
+      "source_url": "https://www.linkedin.com/help/linkedin/answer/a1665329"
+    },
+    {
+      "claim": "Sign in with LinkedIn using OpenID Connect uses openid, profile and email scopes.",
+      "confidence": "sourced",
+      "source_url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2"
+    },
+    {
+      "claim": "Sign In with LinkedIn v1 was deprecated on August 1, 2023.",
+      "confidence": "unverified",
+      "source_url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/migration-faq"
+    },
+    {
+      "claim": "Creating an app requires a Page, a privacy policy URL and a logo.",
+      "confidence": "unverified",
+      "source_url": null
+    },
+    {
+      "claim": "Product enablement is immediate with no wait.",
+      "confidence": "unverified",
+      "source_url": null
+    },
+    {
+      "claim": "Partner program approval timelines.",
+      "confidence": "unverified",
+      "source_url": null
+    },
+    {
+      "claim": "Setup takes about 15 minutes.",
+      "confidence": "unverified",
+      "source_url": null
+    }
+  ],
+  "sources": [
+    { "title": "Getting access to LinkedIn APIs", "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access" },
+    { "title": "Sign in with LinkedIn using OpenID Connect", "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2" },
+    { "title": "Send an app verification request for a LinkedIn Page", "url": "https://www.linkedin.com/help/linkedin/answer/a1665329" }
+  ],
+  "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
+}

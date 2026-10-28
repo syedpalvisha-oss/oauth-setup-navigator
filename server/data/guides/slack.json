@@ -1,0 +1,153 @@
+{
+  "app": { "name": "Slack", "website": "https://slack.com", "category": "communication" },
+  "tier": "self_serve_with_review",
+  "summary": "Keys in minutes and OAuth install to other workspaces is self-serve; Slack Marketplace listing needs Slack review (timeline not published).",
+  "time": {
+    "setup_minutes_estimate": 15,
+    "approval_wait": {
+      "min_days": 0,
+      "max_days": 14,
+      "notes": "Only the Marketplace listing is reviewed. Slack's docs publish no review timeline; 14 days is an unverified placeholder, not a documented figure."
+    }
+  },
+  "prerequisites": [
+    { "item": "Slack workspace where you can create apps", "required": true, "notes": "Workspace admins may restrict app creation or installation." },
+    { "item": "HTTPS redirect URL", "required": true, "notes": "Apps open to other workspaces must support SSL for OAuth redirect, interaction, options load and Events API URLs." },
+    { "item": "Public landing page with privacy policy link", "required": false, "notes": "Required for Marketplace listing; must be public, not behind a login." },
+    { "item": "Public support page with contact method", "required": false, "notes": "Required for Marketplace; responses expected within 2 business days." },
+    { "item": "Privacy policy", "required": false, "notes": "Marketplace: data collected and use, retention, user access/deletion, and an email or webform contact." },
+    { "item": "10 active workspaces or 10 weekly active users", "required": false, "notes": "Marketplace apps below both thresholds are considered unsuitable." }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Create the app",
+      "detail": "Create a new app from scratch or from a manifest and pick the development workspace.",
+      "owner": "developer",
+      "url": "https://api.slack.com/apps"
+    },
+    {
+      "order": 2,
+      "title": "Configure scopes and redirect URL",
+      "detail": "Under OAuth & Permissions add an HTTPS redirect URL and the minimum bot and user scopes.",
+      "owner": "agent",
+      "url": "https://docs.slack.dev/authentication/installing-with-oauth"
+    },
+    {
+      "order": 3,
+      "title": "Install to your workspace",
+      "detail": "Install the app to get a token for your own workspace. An undistributed app is limited to that workspace.",
+      "owner": "developer",
+      "url": "https://docs.slack.dev/distribution/"
+    },
+    {
+      "order": 4,
+      "title": "Implement the OAuth 2.0 flow",
+      "detail": "Build the install flow, use the state parameter, store each workspace's token securely, and verify incoming requests with the signing secret.",
+      "owner": "agent",
+      "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements"
+    },
+    {
+      "order": 5,
+      "title": "Activate public distribution",
+      "detail": "Complete the checklist in the app dashboard and click Activate Public Distribution to let other workspaces install via an Add to Slack button or URL.",
+      "owner": "developer",
+      "url": "https://docs.slack.dev/distribution/"
+    },
+    {
+      "order": 6,
+      "title": "Submit to the Slack Marketplace (optional)",
+      "detail": "For broad or commercial distribution, prepare landing page, support page and privacy policy, then submit for review.",
+      "owner": "developer",
+      "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements"
+    }
+  ],
+  "scopes": [
+    { "scope": "chat:write", "purpose": "Post messages as the bot.", "triggers_review": false, "notes": "Marketplace reviewers return submissions that request unnecessary scopes." },
+    { "scope": "channels:read", "purpose": "List public channels and basic info.", "triggers_review": false, "notes": "Request only if the feature needs it." },
+    { "scope": "users:read", "purpose": "View people in the workspace.", "triggers_review": false, "notes": "Admins weigh requested permissions when approving installs." }
+  ],
+  "blockers": [
+    {
+      "issue": "Workspace admin approval is required to install the app.",
+      "how_to_resolve": "Request the minimum scopes and send the admin a clear explanation of why each is needed."
+    },
+    {
+      "issue": "Marketplace submission returned for unnecessary scopes.",
+      "how_to_resolve": "Remove scopes without a clear, testable justification; move enhancements to optional scopes."
+    },
+    {
+      "issue": "Marketplace app considered unsuitable for low usage.",
+      "how_to_resolve": "Reach at least 10 active workspaces or 10 weekly active users before submitting."
+    }
+  ],
+  "agent_can_do": [
+    "Draft an app manifest with minimum scopes",
+    "Implement the OAuth install flow, state check and signature verification",
+    "Draft privacy policy, landing and support page content",
+    "Write justifications for each requested scope"
+  ],
+  "developer_must_do": [
+    "Create the app and install it in a workspace",
+    "Click Activate Public Distribution after completing the checklist",
+    "Host the public landing, support and privacy pages",
+    "Submit to and respond to the Marketplace review team"
+  ],
+  "claims_evidence": [
+    {
+      "claim": "Undistributed apps work in one workspace only; unlisted distribution requires an OAuth 2.0 flow; Marketplace listing is the path for broad or commercial distribution.",
+      "confidence": "sourced",
+      "source_url": "https://docs.slack.dev/distribution/"
+    },
+    {
+      "claim": "Activating public distribution is self-service via the dashboard checklist; the docs mention review only for Marketplace listing.",
+      "confidence": "sourced",
+      "source_url": "https://docs.slack.dev/distribution/"
+    },
+    {
+      "claim": "Marketplace requires public landing and support pages and a privacy policy covering collection, retention, access/deletion and a contact method.",
+      "confidence": "sourced",
+      "source_url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements"
+    },
+    {
+      "claim": "Apps with fewer than 10 active workspaces and fewer than 10 weekly active users are considered unsuitable for the Marketplace.",
+      "confidence": "sourced",
+      "source_url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements"
+    },
+    {
+      "claim": "Marketplace apps must use the OAuth state parameter, TLS 1.2+ and verify requests with a signing secret.",
+      "confidence": "sourced",
+      "source_url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements"
+    },
+    {
+      "claim": "Reviewers return submissions that request unnecessary user token scopes.",
+      "confidence": "sourced",
+      "source_url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements"
+    },
+    {
+      "claim": "Marketplace review takes 1-2 weeks.",
+      "confidence": "unverified",
+      "source_url": null
+    },
+    {
+      "claim": "Non-Marketplace apps face stricter API rate limits on some methods than Marketplace apps.",
+      "confidence": "unverified",
+      "source_url": null
+    },
+    {
+      "claim": "The specific scopes listed (chat:write, channels:read, users:read) are accurate and none trigger scope-specific review.",
+      "confidence": "unverified",
+      "source_url": null
+    },
+    {
+      "claim": "Setup takes about 15 minutes.",
+      "confidence": "unverified",
+      "source_url": null
+    }
+  ],
+  "sources": [
+    { "title": "Distributing Slack apps", "url": "https://docs.slack.dev/distribution/" },
+    { "title": "Marketplace requirements for OAuth apps", "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements" }
+  ],
+  "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
+}

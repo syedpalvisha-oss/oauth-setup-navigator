@@ -1,0 +1,237 @@
+{
+  "app": {
+    "name": "Zoom OAuth App",
+    "website": "https://zoom.us",
+    "category": "Video Conferencing"
+  },
+  "tier": "review_required",
+  "product_tiers": [
+    {
+      "product": "Zoom OAuth",
+      "tier": "review_required",
+      "notes": "Public and unlisted apps need Zoom Marketplace review; private/beta apps can skip."
+    }
+  ],
+  "summary": "Create a Zoom OAuth app via the Zoom App Marketplace, configure redirect URIs, select scopes, and submit for review if the app is public or unlisted.",
+  "time": {
+    "setup_minutes_estimate": null,
+    "approval_wait": {
+      "min_days": null,
+      "max_days": null,
+      "notes": "Zoom does not publish exact review timeframes."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "Zoom account with developer role (account owner, admin, or assigned Zoom for developers role)",
+      "required": true,
+      "notes": ""
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Log in to Zoom Developer Portal",
+      "detail": "Sign in at https://developers.zoom.us/ with a Zoom account that has the developer role.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/"
+    },
+    {
+      "order": 2,
+      "title": "Create a new OAuth app",
+      "detail": "Navigate to Create an OAuth app page and click “Create”. Fill in app name, description, and select app type (user‑managed or account‑level).",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/integrations/create"
+    },
+    {
+      "order": 3,
+      "title": "Configure Redirect URIs",
+      "detail": "Add HTTPS redirect URIs; localhost URIs are allowed for testing but wildcards are not permitted.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/integrations/oauth"
+    },
+    {
+      "order": 4,
+      "title": "Select Scopes",
+      "detail": "Choose required scopes for the app. Sensitive scopes such as meeting:write will trigger a review.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/integrations/oauth"
+    },
+    {
+      "order": 5,
+      "title": "Save the app and obtain Client ID and Secret",
+      "detail": "After saving, the client ID and secret are displayed; store them securely.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "order": 6,
+      "title": "Test the OAuth flow in development mode",
+      "detail": "In development mode the app can be authorized by up to 10 users.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/integrations/oauth"
+    },
+    {
+      "order": 7,
+      "title": "Submit for review if app is public or unlisted",
+      "detail": "Provide required metadata, privacy policy, and security evidence; then submit via the Marketplace submission page.",
+      "owner": "developer",
+      "url": "https://developers.zoom.us/docs/distribute/app-review-process"
+    }
+  ],
+  "scopes": [
+    {
+      "scope": "meeting:read",
+      "purpose": "Read meeting details of the authenticated user",
+      "triggers_review": false,
+      "notes": ""
+    },
+    {
+      "scope": "meeting:write",
+      "purpose": "Create, update, or delete meetings on behalf of the user",
+      "triggers_review": true,
+      "notes": "Sensitive scope that requires Zoom Marketplace review."
+    }
+  ],
+  "blockers": [
+    {
+      "issue": "Public or unlisted apps require Zoom Marketplace review before they can be used by other users.",
+      "how_to_resolve": "Complete the app submission form, provide privacy/security documentation, and wait for approval."
+    }
+  ],
+  "agent_can_do": [
+    "fetch public documentation pages",
+    "verify endpoint availability"
+  ],
+  "developer_must_do": [
+    "create Zoom account with developer role",
+    "configure redirect URIs and scopes",
+    "submit app for review if needed"
+  ],
+  "claims_evidence": [
+    {
+      "claim": "You have a Zoom account. You are either the Zoom account owner, account admin, or have been assigned the Zoom for developers role.",
+      "confidence": "sourced",
+      "source_url": "https://developers.zoom.us/docs/integrations/create",
+      "supporting_quote": "You have a Zoom account. You are either the Zoom account owner, account admin, or have been assigned the Zoom for developers role."
+    },
+    {
+      "claim": "Tokens expire after a set time and may need renewal or refresh.",
+      "confidence": "sourced",
+      "source_url": "https://developers.zoom.us/docs/integrations/oauth",
+      "supporting_quote": "Tokens expire after a set time and may need renewal or refresh."
+    },
+    {
+      "claim": "Public and unlisted apps undergo a dedicated review process.",
+      "confidence": "unverified",
+      "source_url": "https://developers.zoom.us/docs/distribute/app-review-process",
+      "supporting_quote": null
+    },
+    {
+      "claim": "Note Private and beta apps do not require review.",
+      "confidence": "sourced",
+      "source_url": "https://developers.zoom.us/docs/distribute/app-review-process",
+      "supporting_quote": "Note Private and beta apps do not require review."
+    },
+    {
+      "claim": "Zoom provides an OpenID Connect discovery document at https://zoom.us/.well-known/openid-configuration.",
+      "confidence": "agent_checked",
+      "source_url": "https://zoom.us/.well-known/openid-configuration",
+      "supporting_quote": null
+    },
+    {
+      "claim": "Composio offers managed OAuth credentials for Zoom.",
+      "confidence": "unverified",
+      "source_url": "https://docs.composio.dev/toolkits/zoom",
+      "supporting_quote": null
+    }
+  ],
+  "sources": [
+    {
+      "title": "Create OAuth app page",
+      "url": "https://developers.zoom.us/docs/integrations/create"
+    },
+    {
+      "title": "Zoom OAuth documentation",
+      "url": "https://developers.zoom.us/docs/integrations/oauth"
+    },
+    {
+      "title": "Zoom app review process",
+      "url": "https://developers.zoom.us/docs/distribute/app-review-process"
+    },
+    {
+      "title": "Zoom OpenID configuration",
+      "url": "https://zoom.us/.well-known/openid-configuration"
+    },
+    {
+      "title": "Composio Zoom toolkit",
+      "url": "https://docs.composio.dev/toolkits/zoom"
+    }
+  ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio offers managed OAuth credentials for Zoom.",
+    "confidence": "unverified",
+    "source_url": "https://docs.composio.dev/toolkits/zoom",
+    "supporting_quote": null
+  },
+  "agent_attempts": [
+    {
+      "action": "GET developer portal: https://developers.zoom.us/",
+      "result": "loads without login",
+      "evidence": "status 200; final https://developers.zoom.us/; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-28T09:34:05.162Z"
+    },
+    {
+      "action": "GET OAuth app registration page: https://developers.zoom.us/docs/integrations/create",
+      "result": "loads without login",
+      "evidence": "status 200; final https://developers.zoom.us/docs/integrations/create/; redirects 308; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-28T09:34:05.698Z"
+    },
+    {
+      "action": "GET OAuth docs: https://developers.zoom.us/docs/integrations/oauth",
+      "result": "loads without login",
+      "evidence": "status 200; final https://developers.zoom.us/docs/integrations/oauth/; redirects 308; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-28T09:34:06.152Z"
+    },
+    {
+      "action": "GET authorize endpoint with dummy client_id: https://zoom.us/oauth/authorize",
+      "result": "endpoint responds (HTTP 200)",
+      "evidence": "final https://zoom.us/oauth/signin?_rnd=1793180046481&client_id=oauth-setup-navigator-dummy-client&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&response_type=code&state=probe&_x_zm_rtaid=nRL_rMIWR_GL4RvGhIo_3Q.1793180046480.71d308f779a14b51d928b2c8d310f759&_x_zm_rhtaid=24; redirects 302; body: \"{\"status\":false,\"errorCode\":4702,\"errorMessage\":\"Invalid client_id: oauth-setup-navigator-dummy-client\",\"result\":null}\"",
+      "timestamp": "2026-10-28T09:34:07.068Z"
+    },
+    {
+      "action": "GET https://developers.zoom.us/.well-known/openid-configuration",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-28T09:34:07.355Z"
+    },
+    {
+      "action": "GET https://developers.zoom.us/.well-known/oauth-authorization-server",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-28T09:34:07.643Z"
+    },
+    {
+      "action": "GET https://zoom.us/.well-known/openid-configuration",
+      "result": "discovery document found",
+      "evidence": "issuer=https://zoom.us; authorization_endpoint=https://zoom.us/oauth/authorize; token_endpoint=https://zoom.us/oauth/token; scopes_supported(3)=openid email profile",
+      "timestamp": "2026-10-28T09:34:07.925Z"
+    },
+    {
+      "action": "GET https://zoom.us/.well-known/oauth-authorization-server",
+      "result": "discovery document found",
+      "evidence": "issuer=https://zoom.us; authorization_endpoint=https://zoom.us/oauth/authorize; token_endpoint=https://zoom.us/oauth/token; scopes_supported(0)=not listed",
+      "timestamp": "2026-10-28T09:34:08.200Z"
+    }
+  ],
+  "meta": {
+    "generated_by": "agent",
+    "generated_at": "2026-10-28T09:35:04.689Z",
+    "last_checked": "2026-10-28T09:35:04.689Z",
+    "models_used": [
+      "groq:openai/gpt-oss-20b",
+      "groq:openai/gpt-oss-120b"
+    ]
+  }
+}
