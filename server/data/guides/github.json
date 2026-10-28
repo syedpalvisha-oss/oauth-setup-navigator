@@ -1,5 +1,5 @@
 {
-  "app": { "name": "GitHub (OAuth App)", "website": "https://github.com", "category": "developer_tools" },
+  "app": { "name": "GitHub", "website": "https://github.com", "category": "developer_tools" },
   "tier": "instant",
   "summary": "OAuth App credentials in about 5 minutes with no review step documented; organizations may still need to approve access to their data.",
   "time": {

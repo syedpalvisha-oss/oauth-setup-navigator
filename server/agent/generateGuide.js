@@ -477,6 +477,7 @@ Instructions:
 - Every "claims_evidence" entry with confidence "sourced" MUST include "supporting_quote": a verbatim excerpt (under 300 characters, copied exactly from the matching page text in "Source page excerpts" below, no ellipses or paraphrase) taken from the page at that entry's source_url, directly stating the claim. No fitting quote from that URL means "unverified" with supporting_quote null.
 - Each claim must be a full sentence stating one checkable fact. Do not write process descriptions or notes about missing information (e.g. "app review process details and unknown timelines"); put unknowns in the notes fields instead.
 - A research section marked {"unavailable": ...} was skipped for time: do not rely on it, and mark anything that would depend on it "unverified".
+- app.name is just the product name (e.g. "Zoom", not "Zoom OAuth App"). Add a parenthetical only when the guide covers one specific API of a larger provider, e.g. "Google (Gmail API)".
 - app.website must be the provider's official site URL${target.website ? ` (${target.website})` : ''}.
 - Today is ${today}.
 
