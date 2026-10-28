@@ -34,6 +34,8 @@ router.post('/generate', rateLimit({ max: 5, windowMs: 10 * 60_000 }), async (re
   try {
     // The run continues (and saves) even if the client disconnects, so the work is never wasted.
     const result = await generateGuide(query, { refresh: true, onProgress: (e) => send('progress', e) });
+    const skipped = (result.timings?.stages || []).filter((s) => s.status === 'skipped').map((s) => s.stage);
+    if (skipped.length) result.guide.meta.skipped_stages = skipped;
     saveGeneratedGuide(result.slug, result.guide);
     send('result', { slug: result.slug, cached: false, partial: Boolean(result.partial), warnings: result.warnings, guide: result.guide });
   } catch (e) {

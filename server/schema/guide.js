@@ -109,6 +109,7 @@ const GuideObject = z.object({
     generated_at: z.string().datetime(),
     last_checked: z.string().datetime(),
     models_used: z.array(z.string()).optional(),
+    skipped_stages: z.array(z.string()).optional(), // research stages that could not finish; their claims are unverified
   }),
 });
 

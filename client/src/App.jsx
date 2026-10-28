@@ -1,25 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import Generate from './pages/Generate.jsx';
+import Guide from './pages/Guide.jsx';
+import Home from './pages/Home.jsx';
+import { Link, usePath } from './lib/router.jsx';
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'system');
+  const next = { system: 'light', light: 'dark', dark: 'system' };
+  const cycle = () => {
+    const t = next[theme];
+    setTheme(t);
+    if (t === 'system') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = t;
+    try {
+      if (t === 'system') localStorage.removeItem('theme');
+      else localStorage.setItem('theme', t);
+    } catch {
+      /* storage unavailable: the choice just won't persist */
+    }
+  };
+  return <button className="btn" onClick={cycle} title="Switch theme" aria-label={`Theme: ${theme}. Click to change.`}>Theme: {theme}</button>;
+}
 
 export default function App() {
-  const [health, setHealth] = useState(null);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then(setHealth)
-      .catch((e) => setError(e.message));
-  }, []);
+  const path = usePath();
+  const guideMatch = /^\/guide\/([^/]+)\/?$/.exec(path);
+  let page;
+  if (guideMatch) page = <Guide slug={decodeURIComponent(guideMatch[1])} />;
+  else if (path === '/generate') {
+    const q = new URLSearchParams(window.location.search).get('q')?.trim();
+    page = q ? <Generate key={q} query={q} /> : <Home />;
+  } else page = <Home />;
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow">
-        <h1 className="text-2xl font-semibold">OAuth Setup Navigator</h1>
-        <p className="mt-1 text-sm text-slate-500">Skeleton running end to end.</p>
-        <pre className="mt-4 overflow-auto rounded bg-slate-100 p-3 text-xs">
-          {error ? `API error: ${error}` : health ? JSON.stringify(health, null, 2) : 'Checking /api/health…'}
-        </pre>
-      </div>
-    </main>
+    <>
+      <header className="top">
+        <div className="wrap wide">
+          <Link to="/" className="brand"><span className="brand-dot" />OAuth Setup Navigator</Link>
+          <ThemeToggle />
+        </div>
+      </header>
+      <main>{page}</main>
+    </>
   );
 }
