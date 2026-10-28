@@ -163,12 +163,18 @@ const EXPECTED_OUTPUT_TOKENS = 1500;
  * `onLog` receives one entry per call: { label, provider, model, ms, tokensIn, tokensOut, waitMs, waits, cached, ... }.
  * @returns {{ text: string, provider: string, model: string, cached?: boolean }}
  */
-export async function complete({ system, messages, maxTokens = 4096, onProvider = () => {}, model = GROQ_MODEL, deadline, label = '', onLog = () => {}, expectedOut = EXPECTED_OUTPUT_TOKENS, providers = ['groq', 'gemini'] }) {
+export async function complete({ system, messages, maxTokens = 4096, onProvider = () => {}, model = GROQ_MODEL, deadline, label = '', onLog = () => {}, expectedOut = EXPECTED_OUTPUT_TOKENS, providers = ['groq', 'gemini'], altGroq = false }) {
   const started = Date.now();
+  // Fallback chain. With altGroq, a failing Groq model (tool_use_failed, 5xx, ...) is retried on the other Groq model before Gemini.
+  const otherGroq = model === GROQ_MODEL ? GROQ_FAST_MODEL : GROQ_MODEL;
+  const steps = providers.flatMap((n) => {
+    const p = PROVIDERS.find((x) => x.name === n);
+    return n === 'groq' && altGroq ? [{ p, model }, { p, model: otherGroq }] : [{ p, model }];
+  });
   const log = { label, waits: [], waitMs: 0, failures: [] };
   const finish = (extra) => onLog({ ...log, ...extra, ms: Date.now() - started });
 
-  const cacheKey = `llm:${JSON.stringify([system, messages, maxTokens, model, GEMINI_MODEL])}`;
+  const cacheKey = `llm:${JSON.stringify([system, messages, maxTokens, model, GEMINI_MODEL])}`; // altGroq is deliberately not keyed: it only changes the fallback chain;
   const hit = process.env.GUIDE_NO_LLM_CACHE ? null : diskGet(cacheKey);
   if (hit) {
     onProvider({ ...hit, cached: true });
@@ -183,20 +189,20 @@ export async function complete({ system, messages, maxTokens = 4096, onProvider 
       failures.length = 0;
       let retryable = false;
       let waitMs = 0;
-      for (const p of providers.map((n) => PROVIDERS.find((x) => x.name === n))) {
+      for (const { p, model: m } of steps) {
         let reservation;
         try {
           if (p.name === 'groq') {
             if (!groqConfigured()) throw new ProviderError('GROQ_API_KEY is not set', { unconfigured: true });
             // Groq charges actual usage, not max_tokens (verified with a probe), so reserve input + a modest output guess.
-            const want = Math.min(inputTokens + Math.min(maxTokens, expectedOut), tpmLimitFor(model));
-            reservation = await reserveTokens(model, want, deadline);
+            const want = Math.min(inputTokens + Math.min(maxTokens, expectedOut), tpmLimitFor(m));
+            reservation = await reserveTokens(m, want, deadline);
             if (reservation.waitedMs) {
-              log.waits.push({ reason: `${model} TPM budget`, ms: reservation.waitedMs });
+              log.waits.push({ reason: `${m} TPM budget`, ms: reservation.waitedMs });
               log.waitMs += reservation.waitedMs;
             }
           }
-          const out = await p.call({ system, messages, maxTokens, model, deadline });
+          const out = await p.call({ system, messages, maxTokens, model: m, deadline });
           // Replace the up-front estimate with what Groq actually counted.
           if (reservation && out.tokensIn != null) reservation.entry.tokens = out.tokensIn + (out.tokensOut ?? 0);
           const result = { text: out.text, provider: p.name, model: out.model };
@@ -206,7 +212,7 @@ export async function complete({ system, messages, maxTokens = 4096, onProvider 
           return result;
         } catch (e) {
           if (e instanceof DeadlineError) throw e;
-          failures.push(`${p.name}: ${e.message}`);
+          failures.push(`${p.name}${p.name === 'groq' ? `(${m})` : ''}: ${e.message}`);
           if (e.unconfigured) continue;
           if (e.rateLimited) retryable = true;
           waitMs = Math.max(waitMs, e.retryAfterMs ?? 0);

@@ -2,7 +2,7 @@ import { diskGet, diskSet } from './diskCache.js';
 
 export const tavilyConfigured = () => Boolean(process.env.TAVILY_API_KEY);
 
-const RAW_CHARS = 1800; // per-result cap on raw page content passed to the model
+const RAW_CHARS = 900; // per-result cap on raw page content passed to the model
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**

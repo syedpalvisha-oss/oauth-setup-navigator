@@ -115,7 +115,7 @@ async function gatherSources({ queries, includeDomains, seenUrls, rawByUrl, onSe
  * One research stage: targeted Tavily searches, then one JSON-mode model call over the results.
  * Returns the parsed JSON object; provider usage is reported through onModel.
  */
-async function research({ queries, includeDomains, prompt, seenUrls, rawByUrl, onSearch, onModel, onLog, onTiming, deadline, label }) {
+async function research({ queries, includeDomains, prompt, seenUrls, rawByUrl, onSearch, onModel, onLog, onTiming, deadline, label, model = GROQ_FAST_MODEL }) {
   const sources = await gatherSources({ queries, includeDomains, seenUrls, rawByUrl, onSearch, deadline, onTiming });
   const user = `${prompt}
 
@@ -125,7 +125,7 @@ Answer ONLY from the search results below; if they do not say, use null / "unkno
 ${sources}`;
   const out = await complete({
     system: AGENT_RULES, messages: [{ role: 'user', content: user }], maxTokens: STAGE_MAX_TOKENS,
-    model: GROQ_FAST_MODEL, expectedOut: 400, deadline, label, onLog, onProvider: onModel,
+    model, altGroq: true, expectedOut: 400, deadline, label, onLog, onProvider: onModel,
   });
   return extractJson(out.text);
 }
@@ -299,7 +299,8 @@ export async function generateGuide(input, { onProgress = noop, refresh = false 
       return out;
     } catch (e) {
       rec.ms = sinceStart() - rec.start_ms;
-      if (soft && e instanceof DeadlineError) {
+      // Research stages are skipped on any error (every Groq model and Gemini already failed), not only on a missed deadline.
+      if (soft) {
         rec.status = 'skipped';
         warnings.push(`stage "${STAGES[index]}" skipped: ${e.message}. Claims depending on it are unverified.`);
         emit(index, 'failed', `skipped: ${e.message}`);
@@ -321,9 +322,11 @@ export async function generateGuide(input, { onProgress = noop, refresh = false 
 
   // Stages 1-5 are independent (each only needs the app name), so they run together. Each Groq model has its own
   // TPM bucket and llm.js queues calls against it, so running them concurrently does not cause 429s.
+  // They are split across both Groq models (1,3,5 on 20b; 2,4 on 120b) so no single bucket carries all five.
 
   // 1. Developer portal
   const pPortal = stage(0, {
+    model: GROQ_FAST_MODEL,
     queries: [`${name} developer portal register OAuth app`, `${name} API developer console create new app`],
     prompt: `Find the official developer portal and the OAuth app registration page for: ${subject}.
 Give the official docs domain, the developer portal URL, the page where a developer registers/creates an OAuth app, and whether registration appears to need a login, a paid plan, or contacting sales. Only report URLs that appear in the search results.
@@ -332,6 +335,7 @@ JSON shape: {"official_domain": string|null, "portal_url": string|null, "registr
 
   // 2. OAuth docs
   const pDocs = stage(1, {
+    model: GROQ_MODEL,
     queries: [`${name} OAuth 2.0 authorization endpoint token endpoint redirect URI docs`, `${name} OAuth scopes sensitive restricted testing mode development limits`],
     prompt: `For ${subject}, read the official OAuth setup docs.
 Report: the registration steps; redirect URI rules (https required? localhost? wildcards? limits); the exact authorize and token endpoint URLs; the scope list with any scopes the docs mark sensitive/restricted/requiring review; and any testing-mode / development-mode limits (user caps, token expiry). Cite official URLs.
@@ -340,6 +344,7 @@ JSON shape: {"authorize_url": string|null, "token_url": string|null, "issuer": s
 
   // 3. Approval process
   const pApproval = stage(2, {
+    model: GROQ_FAST_MODEL,
     queries: [`${name} OAuth app review verification approval process`, `${name} app marketplace publish approval how long review takes`],
     prompt: `For ${subject}, research the approval process for OAuth apps: app review, app/brand verification, security assessments, partner programs or access requests, and the wait times. Report setup time and approval wait SEPARATELY, only with a figure if an official page states it; say "unknown" otherwise. Also state which scopes or products need review and what testing-mode limits exist. Cite official URLs.
 JSON shape: {"summary": string, "setup_time": string, "approval_wait": string, "sources": string[]}`,
@@ -347,6 +352,7 @@ JSON shape: {"summary": string, "setup_time": string, "approval_wait": string, "
 
   // 4. Real-world friction
   const pFriction = stage(3, {
+    model: GROQ_MODEL,
     queries: [`${name} OAuth app rejected approval problems stackoverflow reddit`, `${name} OAuth invalid redirect_uri invalid scope error github issue`],
     prompt: `For ${subject}, look for real-world friction setting up and getting OAuth apps approved: forum threads, GitHub issues, Stack Overflow questions, rejection reasons and gotchas. Summarize the recurring problems and how people resolved them. These are anecdotal, so say where each came from and treat them as unverified unless an official page confirms them.
 JSON shape: {"summary": string, "issues": [{"problem": string, "resolution": string|null, "source": string}]}`,
@@ -354,6 +360,7 @@ JSON shape: {"summary": string, "issues": [{"problem": string, "resolution": str
 
   // 5. Composio
   const pComposio = stage(4, {
+    model: GROQ_FAST_MODEL,
     includeDomains: ['docs.composio.dev', 'composio.dev'],
     queries: [`Composio ${name} toolkit managed auth OAuth`],
     prompt: `Check whether Composio offers managed auth (Composio-managed OAuth credentials) for ${subject}, using the toolkits listed at docs.composio.dev. If yes, a developer can start with it and needs their own OAuth app only for production branding, custom scopes or rate limits. If no, they need their own app from day one. If you cannot determine it, say so.
