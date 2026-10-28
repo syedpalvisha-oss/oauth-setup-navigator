@@ -235,6 +235,13 @@ async function findExistingGuide(slug) {
   return null;
 }
 
+/** Existing guide for an app name/URL, or null. Throws on empty input. */
+export async function lookupGuide(input) {
+  const slug = slugify(parseTarget(input).name);
+  const guide = await findExistingGuide(slug);
+  return guide ? { guide, slug } : null;
+}
+
 /**
  * @param {string} input app name or website URL
  * @param {{ onProgress?: (e: object) => void, refresh?: boolean }} [opts]
@@ -253,7 +260,7 @@ export async function generateGuide(input, { onProgress = noop, refresh = false 
 
   if (!refresh) {
     const existing = await findExistingGuide(slugify(target.name));
-    if (existing) return { guide: existing, warnings: [], cached: true };
+    if (existing) return { guide: existing, slug: slugify(target.name), warnings: [], cached: true };
   }
 
   const startedAt = Date.now();
