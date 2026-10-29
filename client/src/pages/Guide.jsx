@@ -126,7 +126,7 @@ function StartHere({ g, steps, blockers, checks }) {
           <div className="label">Main blocker to watch for</div>
           {blocker ? (
             <>
-              <div className="item-title">{blocker.issue} {blocker.confidence && <ConfidencePill level={blocker.confidence} />}</div>
+              <div className="item-title">{blocker.issue} <ConfidencePill level={blocker.confidence} /></div>
               <div className="item-detail">{blocker.how_to_resolve}</div>
             </>
           ) : <div className="sub">None found.</div>}
@@ -257,7 +257,7 @@ export default function Guide({ slug }) {
               <li key={p.item}>
                 <CheckBox checked={Boolean(checks.p[p.item])} onChange={() => toggle('p', p.item)} label={`Done: ${p.item}`} required={p.required} />
                 <div className="grow">
-                  <div className="item-title">{p.item} <span className="tag">{p.required ? 'required' : 'optional'}</span></div>
+                  <div className="item-title">{p.item} <span className="tag">{p.required ? 'required' : 'optional'}</span> <ConfidencePill level={p.confidence} /></div>
                   {p.notes && <div className="item-detail">{p.notes}</div>}
                 </div>
               </li>
@@ -273,7 +273,7 @@ export default function Guide({ slug }) {
               <CheckBox checked={Boolean(checks.s[s.order])} onChange={() => toggle('s', s.order)} label={`Done: step ${s.order}, ${s.title}`} />
               <div className="grow">
                 <div className="row between">
-                  <span className="item-title">{s.title}</span>
+                  <span className="item-title">{s.title} <ConfidencePill level={s.confidence} /></span>
                   <span className={`pill ${s.owner === 'agent' ? 'c-blue' : 'c-gray'}`}>{s.owner === 'agent' ? 'Agent can do' : 'You do this'}</span>
                 </div>
                 <div className="item-detail">{s.detail}</div>
@@ -288,13 +288,14 @@ export default function Guide({ slug }) {
         <Section title="Scopes" hint="Highlighted rows trigger a review.">
           <div className="tablewrap">
             <table>
-              <thead><tr><th>Scope</th><th>Purpose</th><th>Review</th></tr></thead>
+              <thead><tr><th>Scope</th><th>Purpose</th><th>Review</th><th>Confidence</th></tr></thead>
               <tbody>
                 {g.scopes.map((s) => (
                   <tr key={s.scope} className={s.triggers_review ? 'hl' : ''}>
                     <td><code>{s.scope}</code></td>
                     <td>{s.purpose}{s.notes && <div className="small sub">{s.notes}</div>}</td>
                     <td>{s.triggers_review ? <span className="pill c-amber">Triggers review</span> : <span className="sub">No</span>}</td>
+                    <td><ConfidencePill level={s.confidence} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -309,7 +310,7 @@ export default function Guide({ slug }) {
             {blockers.map((b) => (
               <li key={b.issue}>
                 <div className="grow">
-                  <div className="item-title">{b.issue} {b.confidence && <ConfidencePill level={b.confidence} />}</div>
+                  <div className="item-title">{b.issue} <ConfidencePill level={b.confidence} /></div>
                   <div className="item-detail">{b.how_to_resolve}</div>
                   {b.verified_with && <div className="small sub">Verified: {b.verified_with}</div>}
                 </div>
@@ -353,7 +354,7 @@ export default function Guide({ slug }) {
         </Section>
       )}
 
-      <Section title="Evidence" hint="Every claim above rests on one of these levels.">
+      <Section title="Evidence" hint="Every step, scope, prerequisite, blocker and claim carries one of these levels.">
         <Legend />
         <ul className="list" style={{ marginTop: 12 }}>
           {g.claims_evidence.map((c, i) => (

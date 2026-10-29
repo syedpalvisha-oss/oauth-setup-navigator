@@ -9,6 +9,15 @@ export const GENERATED_BY = ['human_verified', 'agent'];
 const url = z.string().url();
 const nonEmpty = z.string().trim().min(1);
 
+// Every actionable item (prerequisite, step, scope, blocker) carries its own confidence, so a wrong claim is never unlabeled.
+// A missing level means nobody backed the item, so it defaults to 'unverified'. 'sourced' items also give source_url and a
+// verbatim supporting_quote (checked in agent/generateGuide.js, where a bad one is downgraded instead of failing the guide).
+const itemEvidence = {
+  confidence: z.enum(CONFIDENCE_LEVELS).default('unverified'),
+  source_url: url.nullable().optional(),
+  supporting_quote: z.string().nullable().optional(),
+};
+
 export const ProductTierSchema = z.object({
   product: nonEmpty,
   tier: z.enum(TIERS),
@@ -67,6 +76,7 @@ const GuideObject = z.object({
       item: nonEmpty,
       required: z.boolean(),
       notes: z.string(),
+      ...itemEvidence,
     }),
   ),
   steps: z
@@ -77,6 +87,7 @@ const GuideObject = z.object({
         detail: nonEmpty,
         owner: z.enum(OWNERS),
         url: url.nullable(),
+        ...itemEvidence,
       }),
     )
     .min(1)
@@ -89,6 +100,7 @@ const GuideObject = z.object({
       purpose: nonEmpty,
       triggers_review: z.boolean(),
       notes: z.string(),
+      ...itemEvidence,
     }),
   ),
   blockers: z.array(
@@ -96,7 +108,7 @@ const GuideObject = z.object({
       issue: nonEmpty,
       how_to_resolve: nonEmpty,
       verified_with: z.string().optional(), // how a 'tested' blocker was observed
-      confidence: z.enum(CONFIDENCE_LEVELS).optional(), // 'agent_checked' for blockers found by the endpoint tests
+      ...itemEvidence, // 'agent_checked' for blockers found by the endpoint tests
     }),
   ),
   agent_can_do: z.array(nonEmpty),

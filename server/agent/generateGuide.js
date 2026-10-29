@@ -26,6 +26,7 @@ const AGENT_RULES = `You are a research agent that produces OAuth app setup guid
 
 Rules:
 - Every claim must be a complete, checkable statement of fact (a sentence with a subject and a predicate), never a topic label or a note about missing information such as "app review process details and unknown timelines".
+- Every step, scope, prerequisite and blocker also needs its own confidence tag, by the same rules as claims. Untagged means "unverified", so tag only what you can back.
 - Every claim needs a confidence tag: "sourced" only with an official URL (the provider's own docs/help/portal pages) whose page text you actually saw AND a "supporting_quote": a short verbatim excerpt (under 300 characters, copied exactly, no ellipses) from that page that directly states the claim. If you cannot quote such a passage, the claim is "unverified". "agent_checked" only when one of the numbered endpoint-test attempts supports it; otherwise "unverified". Never use "tested" (that is reserved for humans who did the setup).
 - Forum posts, blog posts, GitHub issues and Stack Overflow answers are NOT official: anything resting only on them is "unverified".
 - Keep setup time and approval wait separate. If you cannot find a figure, use null and write "unknown" in the notes. Never guess a number.
@@ -207,6 +208,22 @@ function confidenceIssues(guide, { seenUrls, attempts, rawByUrl }) {
   );
   const cm = guide.composio_managed_auth;
   if (cm) check('composio_managed_auth', cm, null, downgrade(cm));
+  // Steps, scopes, prerequisites and blockers carry a confidence of their own. They have no claim sentence to test, so only the
+  // source and quote are checked; "sourced" additionally needs a source_url, which the schema leaves optional.
+  const items = [
+    ['prerequisites', 'item'],
+    ['steps', 'title'],
+    ['scopes', 'scope'],
+    ['blockers', 'issue'],
+  ];
+  for (const [list, nameKey] of items) {
+    guide[list]?.forEach((it, i) => {
+      const label = `${list}[${i}] "${String(it[nameKey]).slice(0, 40)}"`;
+      if (list === 'blockers' && it.confidence === 'agent_checked' && !it.source_url) return; // added by finalize() from the probes themselves
+      if (it.confidence === 'sourced' && !it.source_url) issues.push({ label, msg: `"sourced" needs a source_url`, setDown: downgrade(it) });
+      else check(label, it, null, downgrade(it));
+    });
+  }
   return issues;
 }
 
@@ -491,6 +508,7 @@ JSON Schema:
 ${JSON.stringify(jsonSchema)}
 
 Instructions:
+- Give every prerequisite, step, scope and blocker a "confidence". Use "sourced" only with a "source_url" you saw plus a verbatim "supporting_quote" (same rules as claims); "agent_checked" only when an endpoint-test attempt below supports it (source_url = that probed URL); otherwise "unverified". Registration-form details (field names, what a form does or generates, time taken) are almost never on a page you saw, so they are "unverified". Never use "tested".
 - Omit "agent_attempts", "meta", "notes" and every "verified_with" / "verification_method" field; the system or a human fills them in.
 - "agent_checked" claims: set source_url to the exact URL that attempt probed and mention "attempt #N" in the claim text.
 - "composio_managed_auth": use the Composio findings below; confidence "sourced" only if its source_url is an official docs.composio.dev page you saw and you can add a verbatim "supporting_quote" from it, else "unverified".
@@ -540,6 +558,8 @@ ${sources.urls.join('\n')}`;
     obj.agent_attempts = publicAttempts;
     // Blockers the endpoint tests found are facts the agent observed, so they are added deterministically (not left to the model).
     const findings = attemptFindings(publicAttempts);
+    // A model-written blocker cannot claim a probe backs it without naming the probed URL; only the system adds those.
+    if (Array.isArray(obj.blockers)) for (const b of obj.blockers) if (b && b.confidence === 'agent_checked' && !b.source_url) b.confidence = 'unverified';
     if (findings.length) {
       obj.blockers = [...findings.map((f) => ({ issue: f.issue, how_to_resolve: f.how_to_resolve, confidence: 'agent_checked' })), ...(Array.isArray(obj.blockers) ? obj.blockers : [])];
       obj.verdict_note = verdictNote(findings);

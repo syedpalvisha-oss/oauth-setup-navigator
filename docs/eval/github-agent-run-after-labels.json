@@ -1,0 +1,235 @@
+{
+  "app": {
+    "name": "GitHub",
+    "website": "https://github.com",
+    "category": "Developer Tools"
+  },
+  "tier": "instant",
+  "product_tiers": [
+    {
+      "product": "OAuth",
+      "tier": "instant",
+      "notes": "GitHub provides a self‑serve OAuth app registration without a review step."
+    }
+  ],
+  "summary": "GitHub offers a free, self‑serve OAuth app registration via the developer settings page; apps use the standard OAuth 2.0 flow and do not require a formal approval process for basic scopes.",
+  "verdict_note": "Agent check: The developer portal is behind a login (https://github.com/settings/developers).",
+  "time": {
+    "setup_minutes_estimate": null,
+    "setup_confidence": "unverified",
+    "setup_notes": "Registration requires a logged‑in GitHub account and filling out a short form; exact time varies per developer.",
+    "approval_wait": {
+      "label": "None for basic install · Marketplace: not published",
+      "confidence": "unverified",
+      "min_days": null,
+      "max_days": null,
+      "notes": "GitHub does not publish a wait time for OAuth app approval; basic apps are usable immediately after registration."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "GitHub account",
+      "required": true,
+      "notes": "A personal GitHub account is needed to access the developer settings page.",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    },
+    {
+      "item": "Access to https://github.com/settings/developers",
+      "required": true,
+      "notes": "The registration page is behind a login screen.",
+      "confidence": "agent_checked",
+      "source_url": "https://github.com/settings/developers",
+      "supporting_quote": null
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Log in to GitHub",
+      "detail": "Sign in to your GitHub account at https://github.com and ensure you have access to the developer settings page.",
+      "owner": "developer",
+      "url": "https://github.com/login",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    },
+    {
+      "order": 2,
+      "title": "Navigate to OAuth app registration",
+      "detail": "Visit https://github.com/settings/developers and click “New OAuth App”.",
+      "owner": "developer",
+      "url": "https://github.com/settings/developers",
+      "confidence": "agent_checked",
+      "source_url": "https://github.com/settings/developers",
+      "supporting_quote": null
+    },
+    {
+      "order": 3,
+      "title": "Fill out app details",
+      "detail": "Enter the application name, homepage URL, description, and the Authorization callback URL (must be HTTPS except for localhost).",
+      "owner": "developer",
+      "url": null,
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    },
+    {
+      "order": 4,
+      "title": "Save the app",
+      "detail": "Click “Register application”. GitHub will display the Client ID and Client Secret needed for OAuth flows.",
+      "owner": "developer",
+      "url": null,
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    },
+    {
+      "order": 5,
+      "title": "Implement OAuth flow",
+      "detail": "Use the authorization endpoint https://github.com/login/oauth/authorize and token endpoint https://github.com/login/oauth/access_token in your application code.",
+      "owner": "developer",
+      "url": "https://github.com/login/oauth/authorize",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    }
+  ],
+  "scopes": [
+    {
+      "scope": "repo",
+      "purpose": "Full control of private repositories",
+      "triggers_review": true,
+      "notes": "Sensitive scope that may require GitHub review for certain use‑cases.",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    },
+    {
+      "scope": "read:user",
+      "purpose": "Read access to profile info",
+      "triggers_review": false,
+      "notes": "Standard non‑sensitive scope.",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    },
+    {
+      "scope": "admin:repo_hook",
+      "purpose": "Full control of repository hooks",
+      "triggers_review": true,
+      "notes": "Privileged scope that may trigger review.",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    }
+  ],
+  "blockers": [
+    {
+      "issue": "The developer portal is behind a login (https://github.com/settings/developers).",
+      "how_to_resolve": "Sign in or create a developer account first; the agent could not read this page without one.",
+      "confidence": "agent_checked"
+    },
+    {
+      "issue": "Redirect URI must be pre‑registered",
+      "how_to_resolve": "Ensure the exact callback URL is entered in the app settings; use HTTPS or localhost for development.",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    }
+  ],
+  "agent_can_do": [
+    "Access public documentation pages",
+    "Probe public URLs"
+  ],
+  "developer_must_do": [
+    "Create a GitHub account",
+    "Register the OAuth app",
+    "Implement the OAuth flow using the provided endpoints"
+  ],
+  "claims_evidence": [
+    {
+      "claim": "GitHub’s OAuth implementation supports the standard authorization code grant type.",
+      "confidence": "unverified",
+      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps",
+      "supporting_quote": null
+    },
+    {
+      "claim": "The authorization endpoint is https://github.com/login/oauth/authorize and the token endpoint is https://github.com/login/oauth/access_token.",
+      "confidence": "unverified",
+      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps",
+      "supporting_quote": null
+    }
+  ],
+  "sources": [
+    {
+      "title": "GitHub OAuth app registration page",
+      "url": "https://github.com/settings/developers"
+    },
+    {
+      "title": "Building OAuth apps documentation",
+      "url": "https://docs.github.com/en/developers/apps/building-oauth-apps"
+    },
+    {
+      "title": "Authorizing OAuth apps documentation",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+    },
+    {
+      "title": "Using OAuth apps documentation",
+      "url": "https://docs.github.com/en/apps/oauth-apps/using-oauth-apps"
+    },
+    {
+      "title": "Composio managed auth documentation",
+      "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app"
+    }
+  ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio can register and maintain OAuth apps for GitHub, allowing developers to use managed authentication.",
+    "confidence": "unverified",
+    "source_url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+    "supporting_quote": null
+  },
+  "agent_attempts": [
+    {
+      "action": "GET developer portal: https://github.com/settings/developers",
+      "result": "behind a login",
+      "evidence": "status 200; final https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fsettings%2Fdevelopers; redirects 302; login-redirect=true password-field=true; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-29T07:33:24.982Z"
+    },
+    {
+      "action": "GET OAuth docs: https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps",
+      "result": "loads without login",
+      "evidence": "status 200; final https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-29T07:33:25.099Z"
+    },
+    {
+      "action": "Authorize endpoint probe",
+      "result": "skipped: no authorize URL found in docs",
+      "evidence": "",
+      "timestamp": "2026-10-29T07:33:25.100Z"
+    },
+    {
+      "action": "GET https://github.com/.well-known/openid-configuration",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-29T07:33:25.379Z"
+    },
+    {
+      "action": "GET https://github.com/.well-known/oauth-authorization-server",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-29T07:33:25.651Z"
+    }
+  ],
+  "meta": {
+    "generated_by": "agent",
+    "generated_at": "2026-10-29T07:33:25.825Z",
+    "last_checked": "2026-10-29T07:33:25.825Z",
+    "models_used": [
+      "groq:openai/gpt-oss-20b",
+      "groq:openai/gpt-oss-120b"
+    ]
+  }
+}

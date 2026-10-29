@@ -17,8 +17,8 @@ export function TierBadge({ tier }) {
   return <span className={`pill ${t.cls}`}>{t.label}</span>;
 }
 
-export function ConfidencePill({ level }) {
-  const c = CONFIDENCE[level] ?? { label: level, cls: 'c-gray' };
+export function ConfidencePill({ level = 'unverified' }) {
+  const c = CONFIDENCE[level] ?? CONFIDENCE.unverified;
   return <span className={`pill ${c.cls}`}>{c.label}</span>;
 }
 

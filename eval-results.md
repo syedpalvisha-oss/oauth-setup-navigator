@@ -28,7 +28,8 @@
 - **Right (5):** tier, device flow and grant types, Composio, developer-portal path, endpoint probes.
 - **Partial (2):** approval wait, redirect URI details.
 - **Wrong (3):** client secret behavior, scopes as a registration step, scopes triggering review.
-- **Missed (6):** setup time, org-restriction blocker, OAuth App vs GitHub App, expiring tokens, `agent_can_do`, plus the confidence gap noted above.
+- **Missed (5):** setup time, org-restriction blocker, OAuth App vs GitHub App, expiring tokens, `agent_can_do`.
+- **Weak (1):** confidence labeling. Only 2 evidence entries, none covering the wrong claims.
 
 ## Takeaways
 
