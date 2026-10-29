@@ -12,7 +12,7 @@ router.get('/health', (_req, res) => {
     cache: cache.backend,
     tavily: flag(tavilyConfigured()),
     groq: flag(groqConfigured()),
-    gemini: flag(geminiConfigured()),
+    ...(geminiConfigured() ? { gemini: 'configured' } : {}), // optional fallback: not mentioned when unused
     time: new Date().toISOString(),
   });
 });

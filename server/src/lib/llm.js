@@ -172,10 +172,13 @@ export async function complete({ system, messages, maxTokens = 4096, onProvider 
   const started = Date.now();
   // Fallback chain. With altGroq, a failing Groq model (tool_use_failed, 5xx, ...) is retried on the other Groq model before Gemini.
   const otherGroq = model === GROQ_MODEL ? GROQ_FAST_MODEL : GROQ_MODEL;
-  const steps = providers.flatMap((n) => {
-    const p = PROVIDERS.find((x) => x.name === n);
-    return n === 'groq' && altGroq ? [{ p, model }, { p, model: otherGroq }] : [{ p, model }];
-  });
+  // Gemini is optional: without a key it is left out of the chain entirely (no failed attempt, no wait, no message).
+  const steps = providers
+    .filter((n) => n !== 'gemini' || geminiConfigured())
+    .flatMap((n) => {
+      const p = PROVIDERS.find((x) => x.name === n);
+      return n === 'groq' && altGroq ? [{ p, model }, { p, model: otherGroq }] : [{ p, model }];
+    });
   const log = { label, waits: [], waitMs: 0, failures: [] };
   const finish = (extra) => onLog({ ...log, ...extra, ms: Date.now() - started });
 
