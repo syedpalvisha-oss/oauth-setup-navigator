@@ -8,8 +8,7 @@ Before building an integration you need to know whether OAuth credentials take a
 
 ## My scope and why
 
-Composio’s managed OAuth apps let developers prototype without registering anything. The pain starts at the move to production, when they need their own OAuth app and can’t tell whether that’s 5 minutes or 6 weeks. I focused on that moment.
-
+Composio’s managed OAuth apps let developers prototype without registering anything. The pain starts at the move to production, when they need their own OAuth app and can’t tell whether that’s 5 minutes or 6 weeks. I focused on that mome
 The core of every guide is a verdict: a difficulty tier, with setup time and approval wait shown separately, because “it takes 10 minutes to fill the form, then 4 weeks of review” is the thing developers get blindsided by. Some providers aren’t one tier: LinkedIn’s sign-in is instant, but its marketing APIs are partner-gated, so guides can tier each product.
 
 I chose a small verified library plus a live agent rather than many unverified guides, and labelled every claim by evidence level. A wrong guide that looks confident is worse than no guide. My eval proved this: the agent got GitHub’s tier right but invented details, like an auto-generated secret and a scope review, that a reader would have trusted.
