@@ -4,10 +4,13 @@
   "summary": "Keys in minutes and OAuth install to other workspaces is self-serve; Slack Marketplace listing needs Slack review (timeline not published).",
   "time": {
     "setup_minutes_estimate": 15,
+    "setup_confidence": "unverified",
     "approval_wait": {
-      "min_days": 0,
-      "max_days": 14,
-      "notes": "Only the Marketplace listing is reviewed. Slack's docs publish no review timeline; 14 days is an unverified placeholder, not a documented figure."
+      "label": "None for basic install · Marketplace: not published",
+      "min_days": null,
+      "max_days": null,
+      "notes": "Only the Marketplace listing is reviewed, and Slack's docs publish no review timeline. A rough, unverified guess is 0-14 days; treat it as a placeholder, not a documented figure.",
+      "confidence": "sourced"
     }
   },
   "prerequisites": [
@@ -149,5 +152,12 @@
     { "title": "Distributing Slack apps", "url": "https://docs.slack.dev/distribution/" },
     { "title": "Marketplace requirements for OAuth apps", "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements" }
   ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio maintains a managed OAuth app for Slack, so you can start without registering your own.",
+    "confidence": "sourced",
+    "source_url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+    "supporting_quote": "Composio registers and maintains OAuth apps for popular toolkits such as GitHub, Gmail, and Slack."
+  },
   "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
 }

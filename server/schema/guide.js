@@ -43,8 +43,14 @@ const GuideObject = z.object({
   time: z.object({
     // null = unknown; say so in notes rather than guessing.
     setup_minutes_estimate: z.number().nonnegative().nullable(),
+    // How well the setup-time and approval-wait figures are backed. Absent on older guides (shown as unverified).
+    setup_confidence: z.enum(CONFIDENCE_LEVELS).optional(),
     approval_wait: z
       .object({
+        // Headline shown instead of a numeric range when the wait is a placeholder or unpublished,
+        // e.g. "None for basic install · Marketplace: not published". Put any rough range in notes, not min/max.
+        label: z.string().optional(),
+        confidence: z.enum(CONFIDENCE_LEVELS).optional(),
         min_days: z.number().nonnegative().nullable(),
         max_days: z.number().nonnegative().nullable(),
         notes: z.string(),

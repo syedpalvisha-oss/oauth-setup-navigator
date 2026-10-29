@@ -11,20 +11,26 @@ function setupTime(minutes) {
   return `~${plural(minutes, 'minute')}`;
 }
 
+/** Headline for the approval wait. A label (placeholder/unpublished wait) wins over any numeric range. */
 function approvalWait(w) {
+  if (w.label) return w.label;
   const { min_days: lo, max_days: hi } = w;
   if (lo == null && hi == null) return null;
+  if (lo === 0 && hi === 0) return 'None';
   if (lo === hi) return plural(lo, 'day');
   if (lo == null) return `up to ${plural(hi, 'day')}`;
   if (hi == null) return `${plural(lo, 'day')}+`;
   return `${lo}-${plural(hi, 'day')}`;
 }
 
-function Metric({ label, value, note }) {
+function Metric({ label, value, note, confidence = 'unverified', long = false }) {
   return (
     <div className="metric">
-      <div className="label">{label}</div>
-      <div className={`value${value ? '' : ' unknown'}`}>{value ?? 'Unknown'}</div>
+      <div className="row between" style={{ flexWrap: 'nowrap' }}>
+        <div className="label">{label}</div>
+        <ConfidencePill level={confidence} />
+      </div>
+      <div className={`value${value ? '' : ' unknown'}${long ? ' long' : ''}`}>{value ?? 'Unknown'}</div>
       {note && <div className="note">{note}</div>}
     </div>
   );
@@ -116,8 +122,8 @@ export default function Guide({ slug }) {
           </p>
         </div>
         <div className="metrics">
-          <Metric label="Setup time" value={setup} />
-          <Metric label="Approval wait" value={wait} note={g.time.approval_wait.notes} />
+          <Metric label="Setup time" value={setup} confidence={g.time.setup_confidence} />
+          <Metric label="Approval wait" value={wait} note={g.time.approval_wait.notes} confidence={g.time.approval_wait.confidence} long={Boolean(g.time.approval_wait.label)} />
         </div>
         {skipped.length > 0 && (
           <div className="warn" role="status">

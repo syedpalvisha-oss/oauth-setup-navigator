@@ -21,10 +21,13 @@
   "summary": "Top-level tier is 'instant' because most agent builders only need member sign-in and posting on the member's behalf, both self-serve in about 15 minutes after a LinkedIn Page admin verifies the app; managing company pages or ads (Community Management / Marketing APIs) is partner_gated and needs a LinkedIn access request.",
   "time": {
     "setup_minutes_estimate": 15,
+    "setup_confidence": "unverified",
     "approval_wait": {
-      "min_days": 0,
-      "max_days": 0,
-      "notes": "Open products (Sign in with LinkedIn using OpenID Connect, Share on LinkedIn) are enabled by self-service. For Advertising API, Sales Navigator and Talent programs approval is required and no timeline was found; Compliance is closed."
+      "label": "None for open products · Partner programs: not published",
+      "min_days": null,
+      "max_days": null,
+      "notes": "Open products (Sign in with LinkedIn using OpenID Connect, Share on LinkedIn) are enabled by self-service. For Advertising API, Sales Navigator and Talent programs approval is required and no timeline was found; Compliance is closed.",
+      "confidence": "unverified"
     }
   },
   "prerequisites": [
@@ -167,5 +170,12 @@
     { "title": "Sign in with LinkedIn using OpenID Connect", "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2" },
     { "title": "Send an app verification request for a LinkedIn Page", "url": "https://www.linkedin.com/help/linkedin/answer/a1665329" }
   ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio's LinkedIn toolkit lists managed auth. This is a Composio marketing page rather than its docs, and it does not say which LinkedIn products the managed app covers.",
+    "confidence": "sourced",
+    "source_url": "https://composio.dev/toolkits/linkedin/framework/claude-code",
+    "supporting_quote": "Managed auth Connect Linkedinwithout auth hassles We manage OAuth, API keys, token refresh, and scopes — you just build."
+  },
   "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
 }

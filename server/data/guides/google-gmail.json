@@ -4,10 +4,13 @@
   "summary": "Keys in about 20 minutes, but any public app using Gmail scopes needs Google verification, and restricted scopes add a security assessment taking several weeks.",
   "time": {
     "setup_minutes_estimate": 20,
+    "setup_confidence": "unverified",
     "approval_wait": {
-      "min_days": 14,
-      "max_days": 60,
-      "notes": "Google says restricted-scope verification can 'take several weeks'. The 14 to 60 day range is an unverified estimate. Sensitive-only (e.g. gmail.send) verification and CASA assessor timelines are not stated in the pages checked."
+      "label": "Several weeks for restricted scopes · exact timeline: not published",
+      "min_days": null,
+      "max_days": null,
+      "notes": "Google says restricted-scope verification 'can potentially take several weeks'. A rough, unverified estimate is 14-60 days. Sensitive-only (e.g. gmail.send) verification and CASA assessor timelines are not stated in the pages checked.",
+      "confidence": "sourced"
     }
   },
   "prerequisites": [
@@ -184,5 +187,12 @@
     { "title": "Restricted scope verification", "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification" },
     { "title": "Manage app audience", "url": "https://support.google.com/cloud/answer/15549945" }
   ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio maintains a managed OAuth app for Gmail, so you can start without going through Google verification yourself.",
+    "confidence": "sourced",
+    "source_url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+    "supporting_quote": "Composio registers and maintains OAuth apps for popular toolkits such as GitHub, Gmail, and Slack."
+  },
   "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
 }

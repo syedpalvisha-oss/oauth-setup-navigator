@@ -118,6 +118,7 @@ a.card:hover { border-color: var(--accent); text-decoration: none; }
 .metric { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
 .metric .label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: .05em; }
 .metric .value { font-size: 1.45rem; font-weight: 620; letter-spacing: -0.02em; }
+.metric .value.long { font-size: 1.1rem; line-height: 1.3; margin-top: 2px; }
 .metric .value.unknown { color: var(--muted); font-style: italic; font-weight: 500; }
 .metric .note { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
 .warn { border: 1px solid var(--amber); background: var(--amber-bg); color: var(--amber); border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; }

@@ -477,6 +477,8 @@ Instructions:
 - Every "claims_evidence" entry with confidence "sourced" MUST include "supporting_quote": a verbatim excerpt (under 300 characters, copied exactly from the matching page text in "Source page excerpts" below, no ellipses or paraphrase) taken from the page at that entry's source_url, directly stating the claim. No fitting quote from that URL means "unverified" with supporting_quote null.
 - Each claim must be a full sentence stating one checkable fact. Do not write process descriptions or notes about missing information (e.g. "app review process details and unknown timelines"); put unknowns in the notes fields instead.
 - A research section marked {"unavailable": ...} was skipped for time: do not rely on it, and mark anything that would depend on it "unverified".
+- time.approval_wait: when no official page publishes a wait, set min_days and max_days to null, set "label" to an honest headline such as "None for basic install · Marketplace: not published", and put any rough range in "notes" marked as unverified. Never put a guessed range in min_days/max_days.
+- Leave "setup_confidence" and "approval_wait.confidence" out; the system sets them.
 - app.name is just the product name (e.g. "Zoom", not "Zoom OAuth App"). Add a parenthetical only when the guide covers one specific API of a larger provider, e.g. "Google (Gmail API)".
 - app.website must be the provider's official site URL${target.website ? ` (${target.website})` : ''}.
 - Today is ${today}.
@@ -516,6 +518,11 @@ ${sources.urls.join('\n')}`;
   const finalize = (raw) => {
     const obj = extractJson(raw);
     obj.agent_attempts = publicAttempts;
+    // Time figures carry no supporting quote, so agent output can never claim more than "unverified" for them.
+    if (obj.time && typeof obj.time === 'object') {
+      obj.time.setup_confidence = 'unverified';
+      if (obj.time.approval_wait && typeof obj.time.approval_wait === 'object') obj.time.approval_wait.confidence = 'unverified';
+    }
     obj.meta = { generated_by: 'agent', generated_at: today, last_checked: today, models_used: [...modelsUsed] };
     if (obj.composio_managed_auth == null && composio) {
       obj.composio_managed_auth = { available: composio.available ?? null, notes: composio.notes || 'unknown', confidence: 'unverified', source_url: composio.source_url || null };

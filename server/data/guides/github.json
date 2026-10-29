@@ -4,10 +4,12 @@
   "summary": "OAuth App credentials in about 5 minutes with no review step documented; organizations may still need to approve access to their data.",
   "time": {
     "setup_minutes_estimate": 5,
+    "setup_confidence": "unverified",
     "approval_wait": {
       "min_days": 0,
       "max_days": 0,
-      "notes": "The registration docs describe no review. Organizations with third-party app restrictions require an owner to approve the app (unverified: wait depends on the owner)."
+      "notes": "The registration docs describe no review. Organizations with third-party app restrictions require an owner to approve the app (unverified: wait depends on the owner).",
+      "confidence": "unverified"
     }
   },
   "prerequisites": [
@@ -129,5 +131,12 @@
     { "title": "Authorizing OAuth apps", "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps" },
     { "title": "Managing OAuth access to your organization's data", "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data" }
   ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio maintains a managed OAuth app for GitHub, so you can start without registering your own.",
+    "confidence": "sourced",
+    "source_url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+    "supporting_quote": "Composio registers and maintains OAuth apps for popular toolkits such as GitHub, Gmail, and Slack."
+  },
   "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
 }
