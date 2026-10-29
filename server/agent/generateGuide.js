@@ -7,6 +7,7 @@ import { tavilySearch } from '../src/lib/tavily.js';
 import { cache } from '../src/lib/cache.js';
 import { GuideSchema } from '../schema/guide.js';
 import { runProbes } from './probes.js';
+import { attemptFindings, verdictNote } from './attemptFindings.js';
 
 const DATA_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../data');
 
@@ -80,7 +81,7 @@ const normUrl = (u) => {
 
 // Groq's free tier allows ~8k tokens/minute per model, and five stages share the fast model's bucket,
 // so each stage gets a small context (~1k tokens) and a short answer.
-const MAX_CONTEXT_CHARS = 3500; // total search context passed to the model per stage
+const MAX_CONTEXT_CHARS = 2800; // total search context passed to the model per stage
 const PER_RESULT_CHARS = 900; // spread the context over several results rather than one long page
 const STAGE_MAX_TOKENS = 1200;
 
@@ -125,7 +126,7 @@ Answer ONLY from the search results below; if they do not say, use null / "unkno
 ${sources}`;
   const out = await complete({
     system: AGENT_RULES, messages: [{ role: 'user', content: user }], maxTokens: STAGE_MAX_TOKENS,
-    model, altGroq: true, expectedOut: 400, deadline, label, onLog, onProvider: onModel,
+    model, altGroq: true, providers: ['groq'], expectedOut: 250, deadline, label, onLog, onProvider: onModel,
   });
   return extractJson(out.text);
 }
@@ -329,7 +330,9 @@ export async function generateGuide(input, { onProgress = noop, refresh = false 
 
   // Stages 1-5 are independent (each only needs the app name), so they run together. Each Groq model has its own
   // TPM bucket and llm.js queues calls against it, so running them concurrently does not cause 429s.
-  // They are split across both Groq models (1,3,4,5 on 20b; 2 on 120b) so no single bucket carries all five.
+  // All five run on the 20b bucket with ~1.3k-token prompts, which together fit one minute's budget; the 120b bucket stays
+  // empty for stage 7 (it needs most of that bucket) and is each stage's fallback model. Staggering the starts would not help:
+  // the budget is a sliding 60s window, so a later start frees nothing sooner.
 
   // 1. Developer portal
   const pPortal = stage(0, {
@@ -342,7 +345,7 @@ JSON shape: {"official_domain": string|null, "portal_url": string|null, "registr
 
   // 2. OAuth docs
   const pDocs = stage(1, {
-    model: GROQ_MODEL,
+    model: GROQ_FAST_MODEL,
     queries: [`${name} OAuth 2.0 authorization endpoint token endpoint redirect URI docs`, `${name} OAuth scopes sensitive restricted testing mode development limits`],
     prompt: `For ${subject}, read the official OAuth setup docs.
 Report: the registration steps; redirect URI rules (https required? localhost? wildcards? limits); the exact authorize and token endpoint URLs; the scope list with any scopes the docs mark sensitive/restricted/requiring review; and any testing-mode / development-mode limits (user caps, token expiry). Cite official URLs.
@@ -511,13 +514,19 @@ ${sources.urls.join('\n')}`;
   const warnings = [];
 
   const ask = async () => {
-    const out = await complete({ system: AGENT_RULES, messages, maxTokens: 6000, onProvider: onModel, model: GROQ_MODEL, expectedOut: 2500, providers: ['gemini', 'groq'], deadline, label: 'Writing guide', onLog });
+    const out = await complete({ system: AGENT_RULES, messages, maxTokens: 6000, onProvider: onModel, model: GROQ_MODEL, expectedOut: 2500, providers: ['groq', 'gemini'], deadline, label: 'Writing guide', onLog });
     return out.text;
   };
 
   const finalize = (raw) => {
     const obj = extractJson(raw);
     obj.agent_attempts = publicAttempts;
+    // Blockers the endpoint tests found are facts the agent observed, so they are added deterministically (not left to the model).
+    const findings = attemptFindings(publicAttempts);
+    if (findings.length) {
+      obj.blockers = [...findings.map((f) => ({ issue: f.issue, how_to_resolve: f.how_to_resolve, confidence: 'agent_checked' })), ...(Array.isArray(obj.blockers) ? obj.blockers : [])];
+      obj.verdict_note = verdictNote(findings);
+    }
     // Time figures carry no supporting quote, so agent output can never claim more than "unverified" for them.
     if (obj.time && typeof obj.time === 'object') {
       obj.time.setup_confidence = 'unverified';

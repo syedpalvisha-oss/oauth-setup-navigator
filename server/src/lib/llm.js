@@ -12,11 +12,13 @@ export const geminiConfigured = () => Boolean(process.env.GEMINI_API_KEY);
 export const llmConfigured = () => groqConfigured() || geminiConfigured();
 
 const CALL_TIMEOUT_MS = 60_000; // per provider call
+const GEMINI_TIMEOUT_MS = 20_000; // hard cap: Gemini is a fallback only and its free tier can stall far longer than that
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export class DeadlineError extends Error {}
 
-const estTokens = (text) => Math.ceil(String(text).length / 3.5);
+// ~4 chars/token matches what Groq reports for this English-heavy prompt text (3.5 over-reserved and queued parallel stages).
+const estTokens = (text) => Math.ceil(String(text).length / 4);
 
 // ---------- per-model TPM budget (sliding 60s window) ----------
 // Groq's free tier is ~8k tokens/minute per model. Reserving budget up front means we wait only as long as needed
@@ -129,11 +131,14 @@ async function callGemini({ system, messages, maxTokens, deadline }) {
   gemini ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   await geminiThrottle(deadline);
   try {
-    const response = await gemini.models.generateContent({
+    const call = gemini.models.generateContent({
       model: GEMINI_MODEL,
       contents: messages.map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-      config: { systemInstruction: system, responseMimeType: 'application/json', maxOutputTokens: maxTokens, abortSignal: AbortSignal.timeout(deadline ? Math.max(3_000, Math.min(CALL_TIMEOUT_MS, deadline - Date.now())) : CALL_TIMEOUT_MS) },
+      config: { systemInstruction: system, responseMimeType: 'application/json', maxOutputTokens: maxTokens, abortSignal: AbortSignal.timeout(deadline ? Math.max(3_000, Math.min(GEMINI_TIMEOUT_MS, deadline - Date.now())) : GEMINI_TIMEOUT_MS) },
     });
+    // The SDK can ignore abortSignal while retrying a 429, so the cap is enforced here as well.
+    let timer;
+    const response = await Promise.race([call, new Promise((_, rej) => { timer = setTimeout(() => rej(new ProviderError('Gemini timed out', { status: 504 })), GEMINI_TIMEOUT_MS + 2_000); })]).finally(() => clearTimeout(timer));
     const text = (response.candidates?.[0]?.content?.parts || []).filter((p) => p.text && !p.thought).map((p) => p.text).join('');
     if (!text) throw new ProviderError('Gemini returned an empty response');
     return { text, model: GEMINI_MODEL };

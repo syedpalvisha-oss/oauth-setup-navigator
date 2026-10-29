@@ -40,6 +40,7 @@ const GuideObject = z.object({
   // Only when products of one provider differ in access level; top-level tier is the one most agent builders hit.
   product_tiers: z.array(ProductTierSchema).optional(),
   summary: nonEmpty,
+  verdict_note: z.string().optional(), // what the endpoint tests found (login wall, gated access, dead URL); agent_checked
   time: z.object({
     // null = unknown; say so in notes rather than guessing.
     setup_minutes_estimate: z.number().nonnegative().nullable(),
@@ -93,6 +94,7 @@ const GuideObject = z.object({
     z.object({
       issue: nonEmpty,
       how_to_resolve: nonEmpty,
+      confidence: z.enum(CONFIDENCE_LEVELS).optional(), // 'agent_checked' for blockers found by the endpoint tests
     }),
   ),
   agent_can_do: z.array(nonEmpty),
