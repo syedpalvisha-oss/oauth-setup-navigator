@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchGuide } from '../lib/api.js';
 import { ConfidencePill, Legend, TierBadge, VerifiedTag } from '../lib/guideUi.jsx';
+import { attemptFindings, verdictNote } from '../lib/attemptFindings.js';
 import { Link } from '../lib/router.jsx';
 
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
@@ -61,6 +62,84 @@ function ShareButton() {
   return <button className="btn" onClick={copy}>{copied ? '✓ Link copied' : 'Copy share link'}</button>;
 }
 
+const storageKey = (slug) => `oauth-nav:checks:${slug}`;
+
+/** Checked prerequisites/steps, persisted per guide. Storage can be unavailable (private mode, quota), so every access is guarded. */
+function useChecks(slug) {
+  const [checks, setChecks] = useState({ p: {}, s: {} });
+  useEffect(() => {
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(storageKey(slug)) || 'null');
+    } catch {
+      /* unreadable or unavailable: start empty */
+    }
+    setChecks({ p: saved?.p ?? {}, s: saved?.s ?? {} });
+  }, [slug]);
+  const toggle = (kind, key) =>
+    setChecks((prev) => {
+      const next = { ...prev, [kind]: { ...prev[kind], [key]: !prev[kind][key] } };
+      try {
+        localStorage.setItem(storageKey(slug), JSON.stringify(next));
+      } catch {
+        /* the tick still works for this visit, it just will not persist */
+      }
+      return next;
+    });
+  return [checks, toggle];
+}
+
+function CheckBox({ checked, onChange, label, required }) {
+  return (
+    <button type="button" role="checkbox" aria-checked={checked} aria-label={label} className={`box${required ? ' req' : ''}${checked ? ' checked' : ''}`} onClick={onChange}>
+      {checked ? '✓' : ''}
+    </button>
+  );
+}
+
+function nextStep(g, steps, checks) {
+  const pre = g.prerequisites.find((p) => p.required && !checks.p[p.item]);
+  if (pre) return { text: `Confirm prerequisite: ${pre.item}`, url: null };
+  const step = steps.find((x) => !checks.s[x.order]);
+  if (step) return { text: `Step ${step.order}: ${step.title}`, url: step.url };
+  return null;
+}
+
+function StartHere({ g, steps, blockers, checks }) {
+  const first = steps[0];
+  const blocker = blockers[0];
+  const next = nextStep(g, steps, checks);
+  return (
+    <section className="card start" aria-label="Start here">
+      <h2>Start here</h2>
+      <div className="start-grid">
+        <div>
+          <div className="label">First action</div>
+          {first ? (
+            <>
+              <div className="item-title">{first.title}</div>
+              {first.url && <div className="claim-link"><a href={first.url} target="_blank" rel="noreferrer">{first.url}</a></div>}
+            </>
+          ) : <div className="sub">No steps listed.</div>}
+        </div>
+        <div>
+          <div className="label">Main blocker to watch for</div>
+          {blocker ? (
+            <>
+              <div className="item-title">{blocker.issue} {blocker.confidence && <ConfidencePill level={blocker.confidence} />}</div>
+              <div className="item-detail">{blocker.how_to_resolve}</div>
+            </>
+          ) : <div className="sub">None found.</div>}
+        </div>
+      </div>
+      <div className="next" role="status">
+        <strong>Next step:</strong>{' '}
+        {next ? <>{next.text}{next.url && <> · <a href={next.url} target="_blank" rel="noreferrer">open</a></>}</> : <>Everything is checked off. You are set up.</>}
+      </div>
+    </section>
+  );
+}
+
 function ComposioCard({ c }) {
   const verdict = c.available === true ? { text: 'Not yet. Start with Composio-managed auth.', cls: 'c-green' } : c.available === false ? { text: 'Yes. You need your own OAuth app from day one.', cls: 'c-orange' } : { text: 'Unclear whether you can skip your own app.', cls: 'c-gray' };
   return (
@@ -79,6 +158,7 @@ function ComposioCard({ c }) {
 export default function Guide({ slug }) {
   const [guide, setGuide] = useState(undefined); // undefined = loading, null = not found
   const [error, setError] = useState(null);
+  const [checks, toggle] = useChecks(slug);
 
   useEffect(() => {
     setGuide(undefined);
@@ -101,6 +181,16 @@ export default function Guide({ slug }) {
   const setup = setupTime(g.time.setup_minutes_estimate);
   const wait = approvalWait(g.time.approval_wait);
   const skipped = g.meta.skipped_stages ?? [];
+  const steps = [...g.steps].sort((x, y) => x.order - y.order);
+  const findings = attemptFindings(g.agent_attempts);
+  // Blockers the endpoint tests found come first; stored copies (added at generation time) are not shown twice.
+  const stored = new Set(g.blockers.map((b) => b.issue));
+  const blockers = [
+    ...g.blockers.filter((b) => b.confidence === 'agent_checked'),
+    ...findings.filter((f) => !stored.has(f.issue)).map((f) => ({ issue: f.issue, how_to_resolve: f.how_to_resolve, confidence: 'agent_checked' })),
+    ...g.blockers.filter((b) => b.confidence !== 'agent_checked'),
+  ];
+  const note = g.verdict_note ?? verdictNote(findings);
 
   return (
     <div className="wrap">
@@ -125,12 +215,19 @@ export default function Guide({ slug }) {
           <Metric label="Setup time" value={setup} confidence={g.time.setup_confidence} />
           <Metric label="Approval wait" value={wait} note={g.time.approval_wait.notes} confidence={g.time.approval_wait.confidence} long={Boolean(g.time.approval_wait.label)} />
         </div>
+        {note && (
+          <div className="warn" role="status">
+            {note} <ConfidencePill level="agent_checked" />
+          </div>
+        )}
         {skipped.length > 0 && (
           <div className="warn" role="status">
             <strong>Partial run.</strong> {plural(skipped.length, 'research stage')} did not finish ({skipped.join(', ')}), so claims that depend on {skipped.length === 1 ? 'it' : 'them'} are unverified.
           </div>
         )}
       </div>
+
+      <StartHere g={g} steps={steps} blockers={blockers} checks={checks} />
 
       {g.composio_managed_auth && (
         <Section title="Do you need your own OAuth app yet?">
@@ -158,7 +255,7 @@ export default function Guide({ slug }) {
           <ul className="list">
             {g.prerequisites.map((p) => (
               <li key={p.item}>
-                <span className={`box${p.required ? ' req' : ''}`} aria-hidden="true" />
+                <CheckBox checked={Boolean(checks.p[p.item])} onChange={() => toggle('p', p.item)} label={`Done: ${p.item}`} required={p.required} />
                 <div className="grow">
                   <div className="item-title">{p.item} <span className="tag">{p.required ? 'required' : 'optional'}</span></div>
                   {p.notes && <div className="item-detail">{p.notes}</div>}
@@ -171,9 +268,9 @@ export default function Guide({ slug }) {
 
       <Section title="Steps">
         <ul className="list">
-          {[...g.steps].sort((a, b) => a.order - b.order).map((s) => (
+          {steps.map((s) => (
             <li key={s.order}>
-              <span className="num">{s.order}</span>
+              <CheckBox checked={Boolean(checks.s[s.order])} onChange={() => toggle('s', s.order)} label={`Done: step ${s.order}, ${s.title}`} />
               <div className="grow">
                 <div className="row between">
                   <span className="item-title">{s.title}</span>
@@ -206,13 +303,13 @@ export default function Guide({ slug }) {
         </Section>
       )}
 
-      {g.blockers.length > 0 && (
+      {blockers.length > 0 && (
         <Section title="Blockers and how to resolve them">
           <ul className="list">
-            {g.blockers.map((b) => (
+            {blockers.map((b) => (
               <li key={b.issue}>
                 <div className="grow">
-                  <div className="item-title">{b.issue}</div>
+                  <div className="item-title">{b.issue} {b.confidence && <ConfidencePill level={b.confidence} />}</div>
                   <div className="item-detail">{b.how_to_resolve}</div>
                 </div>
               </li>
