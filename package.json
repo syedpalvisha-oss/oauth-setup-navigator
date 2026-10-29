@@ -2,12 +2,17 @@
   "name": "oauth-setup-navigator",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "install:all": "npm install && npm install --prefix client && npm install --prefix server",
     "dev": "concurrently -n server,client -c blue,green \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
-    "build": "npm run build --prefix client",
+    "build:client": "npm run build --prefix client",
+    "install:browsers": "node server/scripts/install-browsers.js",
+    "build": "npm install --prefix client --include=dev && npm install --prefix server && npm run build:client && npm run install:browsers",
     "start": "npm run start --prefix server"
   },
   "devDependencies": {

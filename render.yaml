@@ -1,0 +1,19 @@
+# Render Blueprint: one web service. Express serves the API and the built React app.
+# Secrets are declared with sync: false, so Render asks for them in the dashboard and they never live in this repo.
+services:
+  - type: web
+    name: oauth-setup-navigator
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

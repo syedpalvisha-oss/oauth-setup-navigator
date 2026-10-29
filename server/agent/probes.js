@@ -88,12 +88,28 @@ function gatingSignals(r, text) {
   return { loginRedirect, passwordField, paywallHits };
 }
 
+// Browsers are installed inside node_modules (PLAYWRIGHT_BROWSERS_PATH=0) so a hosted build's install survives to runtime.
+process.env.PLAYWRIGHT_BROWSERS_PATH ??= '0';
+
 let playwrightState; // 'ok' | 'unavailable'
+let playwrightReason = '';
 async function renderWithPlaywright(url) {
+  if (process.env.PLAYWRIGHT_DISABLED === '1' && !playwrightState) {
+    playwrightState = 'unavailable';
+    playwrightReason = 'disabled by PLAYWRIGHT_DISABLED=1';
+  }
+  if (playwrightState === 'unavailable') return { error: `unavailable: ${playwrightReason}` };
   let browser;
   try {
     const { chromium } = await import('playwright');
-    browser = await chromium.launch({ headless: true });
+    try {
+      browser = await chromium.launch({ headless: true });
+    } catch (e) {
+      // Chromium missing or its system libraries absent (common on hosted runtimes): stop trying and fall back to fetch-only probes.
+      playwrightState = 'unavailable';
+      playwrightReason = e.message.split('\n')[0].slice(0, 160);
+      return { error: `unavailable: ${playwrightReason}` };
+    }
     const page = await browser.newPage({ userAgent: UA });
     await page.route('**/*', async (route) => {
       try {
@@ -255,7 +271,7 @@ export async function runProbes({ website, endpoints }, onAttempt = () => {}) {
   for (const o of origins) discovery.push(...(await discoveryCheck(o, record)));
 
   if (playwrightState === 'unavailable') {
-    record({ url: 'n/a', action: 'Playwright rendering', result: 'skipped: Chromium not installed (npx playwright install chromium)', evidence: '' });
+    record({ url: 'n/a', action: 'Playwright rendering', result: 'skipped: headless Chromium could not start here, so only plain fetches were used', evidence: playwrightReason });
   }
 
   return { attempts, summary: { pageResults, discovery: discovery.map((d) => d.url) } };
