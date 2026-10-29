@@ -1,0 +1,172 @@
+{
+  "app": {
+    "name": "GitHub",
+    "website": "https://github.com",
+    "category": "Developer Platform"
+  },
+  "tier": "instant",
+  "product_tiers": [
+    {
+      "product": "OAuth",
+      "tier": "instant",
+      "notes": "Basic OAuth apps can be created without review; sensitive scopes may trigger review."
+    }
+  ],
+  "summary": "GitHub provides a self‑serve OAuth app registration flow that requires a logged‑in GitHub account and no paid plan; most apps are approved instantly unless they request sensitive scopes.",
+  "time": {
+    "setup_minutes_estimate": null,
+    "setup_confidence": "unverified",
+    "setup_notes": "Registration is done via the GitHub UI; exact time varies by developer.",
+    "approval_wait": {
+      "label": "None for basic install · Marketplace: not published",
+      "confidence": "unverified",
+      "min_days": null,
+      "max_days": null,
+      "notes": "GitHub does not publish a wait time for basic OAuth app approval; organizations can enable approval policies but no timeline is documented."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "GitHub account",
+      "required": true,
+      "notes": "A free GitHub account is sufficient to register an OAuth app."
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Sign in to GitHub",
+      "detail": "Log in to your GitHub account at https://github.com.",
+      "owner": "developer",
+      "url": "https://github.com"
+    },
+    {
+      "order": 2,
+      "title": "Navigate to Developer Settings",
+      "detail": "Go to Settings → Developer settings → OAuth Apps.",
+      "owner": "developer",
+      "url": "https://github.com/settings/developers"
+    },
+    {
+      "order": 3,
+      "title": "Create a new OAuth App",
+      "detail": "Click \"New OAuth App\" and fill in the app name, homepage URL, and callback URL (must use HTTPS except for localhost).",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "order": 4,
+      "title": "Save the client ID and client secret",
+      "detail": "After creation, copy the generated client ID and client secret for use in your application.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "order": 5,
+      "title": "Configure scopes",
+      "detail": "Select the required scopes for your app; avoid unnecessary sensitive scopes to prevent review.",
+      "owner": "developer",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+    },
+    {
+      "order": 6,
+      "title": "Test the OAuth flow",
+      "detail": "Direct users to https://github.com/login/oauth/authorize with your client_id and requested scopes, then exchange the code at https://github.com/login/oauth/access_token.",
+      "owner": "developer",
+      "url": "https://github.com/login/oauth/authorize"
+    }
+  ],
+  "scopes": [
+    {
+      "scope": "repo",
+      "purpose": "Full control of private repositories",
+      "triggers_review": true,
+      "notes": "Sensitive scope; may require organization approval."
+    },
+    {
+      "scope": "user",
+      "purpose": "Read/write access to profile info",
+      "triggers_review": true,
+      "notes": "Sensitive scope; may require organization approval."
+    },
+    {
+      "scope": "read:user",
+      "purpose": "Read-only access to profile info",
+      "triggers_review": false,
+      "notes": ""
+    }
+  ],
+  "blockers": [],
+  "agent_can_do": [],
+  "developer_must_do": [
+    "Create the OAuth app in GitHub",
+    "Configure redirect URIs correctly",
+    "Select appropriate scopes"
+  ],
+  "claims_evidence": [
+    {
+      "claim": "GitHub's OAuth implementation supports the standard authorization code grant type and the OAuth 2.0 Device Authorization Grant for apps that don't have access to a web browser.",
+      "confidence": "sourced",
+      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps",
+      "supporting_quote": "GitHub's OAuth implementation supports the standard authorization code grant type and the OAuth 2.0 Device Authorization Grant for apps that don't have access to a web browser."
+    },
+    {
+      "claim": "Composio registers and maintains OAuth apps for popular toolkits such as GitHub, Gmail, and Slack.",
+      "confidence": "unverified",
+      "source_url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+      "supporting_quote": null
+    }
+  ],
+  "sources": [
+    {
+      "title": "GitHub OAuth documentation",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+    },
+    {
+      "title": "Composio managed app overview",
+      "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app"
+    }
+  ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio provides a managed OAuth app for GitHub, allowing developers to start without registering their own app.",
+    "confidence": "sourced",
+    "source_url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+    "supporting_quote": "Composio registers and maintains OAuth apps for popular toolkits such as GitHub, Gmail, and Slack."
+  },
+  "agent_attempts": [
+    {
+      "action": "GET OAuth docs: https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps",
+      "result": "loads without login",
+      "evidence": "status 200; final https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-29T07:17:13.369Z"
+    },
+    {
+      "action": "GET authorize endpoint with dummy client_id: https://github.com/login/oauth/authorize",
+      "result": "endpoint responds (HTTP 200)",
+      "evidence": "final https://github.com/login?client_id=oauth-setup-navigator-dummy-client&return_to=%2Flogin%2Foauth%2Fauthorize%3Fclient_id%3Doauth-setup-navigator-dummy-client%26redirect_uri%3Dhttps%253A%252F%252Fexample.com%252Fcallback%26response_type%3Dcode%26state%3Dprobe; redirects 302; body: \"Sign in to GitHub · GitHub Skip to content You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. Dismiss al…\"",
+      "timestamp": "2026-10-29T07:17:14.051Z"
+    },
+    {
+      "action": "GET https://github.com/.well-known/openid-configuration",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-29T07:17:14.335Z"
+    },
+    {
+      "action": "GET https://github.com/.well-known/oauth-authorization-server",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-29T07:17:14.601Z"
+    }
+  ],
+  "meta": {
+    "generated_by": "agent",
+    "generated_at": "2026-10-29T07:17:14.602Z",
+    "last_checked": "2026-10-29T07:17:14.602Z",
+    "models_used": [
+      "groq:openai/gpt-oss-120b",
+      "groq:openai/gpt-oss-20b"
+    ]
+  }
+}

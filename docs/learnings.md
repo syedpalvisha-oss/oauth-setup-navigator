@@ -28,3 +28,14 @@ A supervised browser agent (Claude in Chrome) registered a real GitHub OAuth App
 | Org restrictions | "Organizations can restrict third-party apps" (unverified) | Observed a test org whose policy reads "Access restricted: only approved apps can access org data". A member actually being blocked was not exercised |
 
 Confirmed unchanged: "Expire user access tokens" is on by default. Lessons: the registration form is the source of truth, so UI wording ("callback URL" vs "Redirect URIs") drifts from the docs; and "not stated in the docs" claims are cheap to settle with a minute of hands-on testing, so a short supervised run beats a long list of unverified claims.
+
+## Fresh agent run vs. the tested GitHub guide (eval, 2026-10-29)
+A fresh `--refresh` run on "GitHub" (full table in `eval-results.md`, output in `docs/eval/github-agent-run.json`) matched the tested guide on tier, portal path, Composio and device flow, but missed or got wrong the details that matter most to a developer:
+
+- **Client secret:** the agent said the secret is generated at creation. The test showed nothing is created at registration; you click "Generate a new client secret". Confident wrong claims like this need a hands-on check.
+- **Org approval was missed as a blocker:** `blockers` came back empty. The agent attached org approval to "sensitive scopes" instead, but the restriction applies to any app in an org with "Access restricted". Org-level policies need their own search, separate from the scope-review search.
+- **Scopes are not a registration step.** It listed "Configure scopes" as step 5 and set `triggers_review: true` on `repo` and `user`. The test found no scope field at registration and no GitHub review, only org owner approval. "Sensitive scopes trigger review" looks like a pattern copied from other providers (Google, Slack).
+- **OAuth App vs GitHub App was never mentioned,** so the "use a GitHub App for fine-grained permissions" blocker was lost. When a provider has two app types, the agent should compare them explicitly.
+- **Redirect URIs:** the agent wrote a single "callback URL" with an HTTPS-except-localhost rule. The form has a list of up to 10 URIs with optional wildcards. Docs wording lags the UI.
+- **Setup time and approval wait stayed `unverified`/null** while the summary still said "approved instantly unless they request sensitive scopes", which is a review step that doesn't exist. Summaries should not state more than the field confidence supports.
+- **Evidence coverage was thin:** only 2 `claims_evidence` entries, none covering the wrong claims. The model can write steps with no evidence row, so wrong claims escape the confidence labels. Consider requiring an evidence entry per step-level factual claim, or marking uncovered steps as unverified.
