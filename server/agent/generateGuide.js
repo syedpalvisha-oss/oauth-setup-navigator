@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { complete, DeadlineError, GROQ_FAST_MODEL, GROQ_MODEL } from '../src/lib/llm.js';
+import { complete, DeadlineError, forgetCompletion, GROQ_FAST_MODEL, GROQ_MODEL } from '../src/lib/llm.js';
 import { tavilySearch } from '../src/lib/tavily.js';
 import { cache } from '../src/lib/cache.js';
 import { GuideSchema } from '../schema/guide.js';
@@ -232,6 +232,14 @@ const zodIssues = (err) => err.issues.map((i) => `${i.path.join('.') || '(root)'
 
 // ---------- main ----------
 
+/** Thrown inside the endpoint-test stage when there is no URL to probe; shown as "Skipped: nothing to test". */
+class NothingToTest extends Error {
+  constructor() {
+    super('nothing to test');
+  }
+}
+const isHttpUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
+
 const guideCacheKey = (slug) => `guide:${slug}`;
 
 /** A guide that already exists (cache, curated, or previously generated) is returned without touching any model. */
@@ -401,6 +409,9 @@ JSON shape: {"available": true|false|null, "notes": string, "source_url": string
     return runStage(
       5,
       async () => {
+        // Research that was skipped or found no URLs leaves nothing to probe: report that instead of a green "Done · 0.0s".
+        const hasTarget = [target.website, endpoints.portal_url, endpoints.registration_url, endpoints.docs_url, endpoints.authorize_url, endpoints.issuer].some(isHttpUrl);
+        if (!hasTarget) throw new NothingToTest();
         const timer = new Promise((_, reject) =>
           setTimeout(() => reject(new DeadlineError('endpoint tests passed the research deadline')), Math.max(0, researchDeadline - Date.now())).unref(),
         );
@@ -408,6 +419,7 @@ JSON shape: {"available": true|false|null, "notes": string, "source_url": string
           runProbes({ website: target.website || endpoints.portal_url, endpoints }, (a) => emit(5, 'info', `${a.action} -> ${a.result}`)),
           timer,
         ]);
+        if (!result.attempts.length) throw new NothingToTest();
         for (const a of result.attempts) if (a.url) seenUrls.add(a.url);
         return result;
       },
@@ -548,8 +560,10 @@ ${sources.urls.join('\n')}`;
   const messages = [{ role: 'user', content: prompt }];
   const warnings = [];
 
+  let lastKey = null; // disk-cache key of the latest model answer, evicted if that answer is unusable
   const ask = async () => {
     const out = await complete({ system: AGENT_RULES, messages, maxTokens: 6000, onProvider: onModel, model: GROQ_MODEL, expectedOut: 1500, providers: ['groq', 'gemini'], deadline, label: 'Writing guide', onLog });
+    lastKey = out.cacheKey;
     return out.text;
   };
 
@@ -594,6 +608,9 @@ ${sources.urls.join('\n')}`;
     } catch (e) {
       problems = [`output was not valid JSON: ${e.message}`];
     }
+
+    // An answer that was not clean must not be replayed from the disk cache on a rerun; nothing partial is kept.
+    if (problems.length && lastKey) forgetCompletion(lastKey);
 
     // Retry only when the output is unusable (bad JSON / schema). Confidence problems are fixed deterministically by
     // downgrading below: a retry replays the whole conversation (~7k tokens), which cannot fit a ~8k tokens/minute

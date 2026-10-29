@@ -1,3 +1,5 @@
+export const FRIENDLY_FAILURE = "Couldn't generate this guide right now. Please try again in a minute.";
+
 export async function fetchGuides() {
   const res = await fetch('/api/guides');
   if (!res.ok) throw new Error(`Could not load guides (HTTP ${res.status})`);
@@ -31,16 +33,22 @@ export function findGuide(guides, query) {
  * Resolves with { slug } once done. `onEvent(event, data)` receives every 'progress' event.
  */
 export async function generate(query, { onEvent, signal }) {
-  const res = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ query }),
-    signal,
-  });
+  let res;
+  try {
+    res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query }),
+      signal,
+    });
+  } catch (e) {
+    if (e?.name === 'AbortError') throw e;
+    throw new Error(FRIENDLY_FAILURE);
+  }
   const type = res.headers.get('content-type') || '';
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed (HTTP ${res.status})`);
+    throw new Error(body.error || FRIENDLY_FAILURE);
   }
   if (type.includes('application/json')) {
     const body = await res.json();
@@ -52,7 +60,7 @@ export async function generate(query, { onEvent, signal }) {
   let buf = '';
   let result = null;
   for (;;) {
-    const { value, done } = await reader.read();
+    const { value, done } = await reader.read().catch(() => ({ done: true }));
     if (done) break;
     buf += decoder.decode(value, { stream: true });
     let i;
@@ -65,9 +73,9 @@ export async function generate(query, { onEvent, signal }) {
       const data = JSON.parse(dataLine);
       if (event === 'progress') onEvent(data);
       else if (event === 'result') result = data;
-      else if (event === 'error') throw new Error(data.error || 'Generation failed');
+      else if (event === 'error') throw new Error(data.error || FRIENDLY_FAILURE);
     }
   }
-  if (!result) throw new Error('The connection closed before the guide was finished.');
+  if (!result) throw new Error(FRIENDLY_FAILURE);
   return { slug: result.slug, partial: Boolean(result.partial) };
 }

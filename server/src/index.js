@@ -10,6 +10,7 @@ import generateRouter from './routes/generate.js';
 import { cache } from './lib/cache.js';
 import { groqConfigured } from './lib/llm.js';
 import { tavilyConfigured } from './lib/tavily.js';
+import { FRIENDLY_FAILURE } from './lib/validateQuery.js';
 
 const app = express();
 // Behind a hosting proxy (Render) every request arrives from the proxy's address, so the per-IP rate limit needs the real client IP
@@ -35,6 +36,14 @@ if (existsSync(path.join(clientDist, 'index.html'))) {
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 }
+
+// Last resort: bad JSON bodies and unexpected throws get a plain message; the detail goes to the log, never to the browser.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const bad = err?.type === 'entity.parse.failed' || err?.status === 400;
+  console.error(`${req.method} ${req.path} failed: ${err?.message ?? err}`);
+  res.status(bad ? 400 : 500).json({ error: bad ? 'Enter an app name or website URL.' : FRIENDLY_FAILURE });
+});
 
 const port = Number(process.env.PORT) || 3001;
 app.listen(port, () => {

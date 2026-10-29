@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { generate } from '../lib/api.js';
 import { Link, navigate } from '../lib/router.jsx';
+import { validateQuery } from '../lib/validateQuery.js';
 
 const STAGES = [
   'Finding developer portal',
@@ -28,6 +29,11 @@ export default function Generate({ query }) {
     startRef.current = Date.now();
     setError(null);
     setStages(STAGES.map(() => ({ status: 'pending', startedAt: null, ms: null, note: '' })));
+    const checked = validateQuery(query);
+    if (!checked.ok) {
+      setError(checked.error);
+      return;
+    }
 
     const onEvent = (e) => {
       if (id !== runId.current) return;
@@ -85,10 +91,14 @@ export default function Generate({ query }) {
               <span className={`ico ${s.status}`} aria-hidden="true">{ICON[s.status]}</span>
               <div className="grow">
                 <div>{STAGES[i]}</div>
-                {s.status === 'skipped' && <div className="small sub">Skipped, so claims that depend on it stay unverified.</div>}
-                {s.status === 'failed' && <div className="small" style={{ color: 'var(--red)' }}>{s.note}</div>}
+                {s.status === 'skipped' && (
+                  <div className="small sub">
+                    {s.note === 'skipped: nothing to test' ? 'Skipped: nothing to test.' : 'Skipped, so claims that depend on it stay unverified.'}
+                  </div>
+                )}
+                {s.status === 'failed' && <div className="small" style={{ color: 'var(--red)' }}>This step didn't finish.</div>}
               </div>
-              <span className="st">{LABEL[s.status]}{live != null && s.status !== 'pending' ? ` · ${fmt(live)}` : ''}</span>
+              <span className="st">{s.status === 'skipped' && s.note === 'skipped: nothing to test' ? 'Skipped: nothing to test' : `${LABEL[s.status]}${live != null && s.status !== 'pending' ? ` · ${fmt(live)}` : ''}`}</span>
             </div>
           );
         })}
@@ -96,9 +106,9 @@ export default function Generate({ query }) {
 
       {error && (
         <div className="error" role="alert">
-          <strong>Generation failed.</strong> {error}
+          <strong>{validateQuery(query).ok ? 'Generation failed.' : 'Check your search.'}</strong> {error}
           <div className="row" style={{ marginTop: 10 }}>
-            <button className="btn primary" onClick={run}>Retry</button>
+            {validateQuery(query).ok && <button className="btn primary" onClick={run}>Retry</button>}
             <Link to="/" className="btn">Back to guides</Link>
           </div>
         </div>

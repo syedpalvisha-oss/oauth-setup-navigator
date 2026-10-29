@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { fetchGuides, findGuide } from '../lib/api.js';
 import { Legend, TierBadge, VerifiedTag } from '../lib/guideUi.jsx';
 import { Link, navigate } from '../lib/router.jsx';
+import { validateQuery } from '../lib/validateQuery.js';
 
 export default function Home() {
   const [guides, setGuides] = useState(null);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
+  const [queryError, setQueryError] = useState(null);
 
   useEffect(() => {
     fetchGuides().then(setGuides).catch((e) => setError(e.message));
@@ -14,8 +16,10 @@ export default function Home() {
 
   const submit = (e) => {
     e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
+    const checked = validateQuery(query);
+    if (!checked.ok) return setQueryError(checked.error);
+    setQueryError(null);
+    const q = checked.query;
     const match = guides && findGuide(guides, q);
     navigate(match ? `/guide/${match.slug}` : `/generate?q=${encodeURIComponent(q)}`);
   };
@@ -28,9 +32,10 @@ export default function Home() {
           Setup time, approval waits, review gates and gotchas for the APIs you integrate with, each claim tagged with how well it is backed.
         </p>
         <form className="search" onSubmit={submit} role="search">
-          <input aria-label="App name or website URL" placeholder="App name or URL, e.g. Zoom or zoom.us" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+          <input aria-label="App name or website URL" aria-invalid={queryError ? 'true' : undefined} aria-describedby={queryError ? 'query-error' : undefined} placeholder="App name or URL, e.g. Zoom or zoom.us" value={query} onChange={(e) => { setQuery(e.target.value); setQueryError(null); }} autoFocus />
           <button className="btn primary" type="submit">Search</button>
         </form>
+        {queryError && <div id="query-error" className="field-error" role="alert">{queryError}</div>}
       </section>
 
       <section className="section">

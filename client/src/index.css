@@ -122,6 +122,7 @@ a.card:hover { border-color: var(--accent); text-decoration: none; }
 .metric .value.unknown { color: var(--muted); font-style: italic; font-weight: 500; }
 .metric .note { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
 .warn { border: 1px solid var(--amber); background: var(--amber-bg); color: var(--amber); border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; }
+.field-error { margin-top: 8px; color: var(--red); font-size: 0.9rem; }
 .error { border: 1px solid var(--red); background: var(--red-bg); color: var(--red); border-radius: 10px; padding: 10px 14px; }
 
 .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }

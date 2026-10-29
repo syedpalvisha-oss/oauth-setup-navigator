@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,5 +23,14 @@ export function diskSet(key, value) {
     writeFileSync(fileFor(key), JSON.stringify({ at: Date.now(), value }));
   } catch {
     /* caching is best-effort */
+  }
+}
+
+/** Drops one entry, e.g. a model answer that turned out to be unusable and must not be replayed. */
+export function diskDel(key) {
+  try {
+    rmSync(fileFor(key), { force: true });
+  } catch {
+    /* best-effort */
   }
 }

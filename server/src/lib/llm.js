@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { diskGet, diskSet } from './diskCache.js';
+import { diskDel, diskGet, diskSet } from './diskCache.js';
 
 // Provider abstraction: Groq is primary, Gemini (no grounding) is the fallback.
 export const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
@@ -163,6 +163,9 @@ const PROVIDERS = [
 const MAX_ROUNDS = 3;
 const EXPECTED_OUTPUT_TOKENS = 1500;
 
+/** Forget a cached model answer (by the `cacheKey` complete() returned) that failed validation, so a rerun asks the model again. */
+export const forgetCompletion = diskDel;
+
 /**
  * JSON-mode completion. Tries Groq first (`model` selects which Groq model); falls back to Gemini only when Groq
  * errors or is rate limited. Answers are cached on disk by request, so an identical call never reaches a model twice.
@@ -190,7 +193,7 @@ export async function complete({ system, messages, maxTokens = 4096, onProvider 
   if (hit) {
     onProvider({ ...hit, cached: true });
     finish({ provider: hit.provider, model: hit.model, cached: true });
-    return { ...hit, cached: true };
+    return { ...hit, cached: true, cacheKey };
   }
 
   const inputTokens = estTokens(system) + messages.reduce((a, m) => a + estTokens(m.content), 0);
@@ -220,7 +223,7 @@ export async function complete({ system, messages, maxTokens = 4096, onProvider 
           diskSet(cacheKey, result);
           onProvider(result);
           finish({ provider: p.name, model: out.model, tokensIn: out.tokensIn ?? null, tokensOut: out.tokensOut ?? null, limitTokens: out.limitTokens ?? null, remainingTokens: out.remainingTokens ?? null });
-          return result;
+          return { ...result, cacheKey };
         } catch (e) {
           if (e instanceof DeadlineError) throw e;
           // A call that failed for a reason other than rate limiting (e.g. tool_use_failed) used no budget: give the reservation back.
