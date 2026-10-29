@@ -1,0 +1,204 @@
+{
+  "app": {
+    "name": "Notion",
+    "website": "https://www.notion.so",
+    "category": "Productivity"
+  },
+  "tier": "partner_gated",
+  "product_tiers": [
+    {
+      "product": "Notion API",
+      "tier": "partner_gated",
+      "notes": "OAuth app creation requires login to Notion Developers portal and workspace admin rights."
+    }
+  ],
+  "summary": "Notion OAuth apps are created in the Notion Developer portal, require a logged‑in workspace owner, and use standard OAuth 2.0 endpoints; there is no public self‑serve registration page, and review details are not publicly documented.",
+  "time": {
+    "setup_minutes_estimate": null,
+    "setup_confidence": "unverified",
+    "setup_notes": "Setup time varies; requires creating an integration, configuring redirect URIs, and copying client credentials.",
+    "approval_wait": {
+      "label": "None for basic install · Marketplace: not published",
+      "confidence": "unverified",
+      "min_days": null,
+      "max_days": null,
+      "notes": "Notion does not publish an OAuth app review or approval timeline."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "Notion account",
+      "required": true,
+      "notes": "A personal or workspace account is needed to access the developer portal."
+    },
+    {
+      "item": "Workspace owner or admin permissions",
+      "required": true,
+      "notes": "Only owners can create integrations."
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Log in to Notion Developer portal",
+      "detail": "Navigate to https://developers.notion.com and sign in with a Notion account that has workspace owner permissions.",
+      "owner": "developer",
+      "url": "https://developers.notion.com"
+    },
+    {
+      "order": 2,
+      "title": "Create a new integration",
+      "detail": "In the portal, click “Create new integration”, give it a name, select the workspace, and save. The integration page will display a client ID and client secret.",
+      "owner": "developer",
+      "url": "https://developers.notion.com/guides/get-started/authorization"
+    },
+    {
+      "order": 3,
+      "title": "Configure redirect URIs",
+      "detail": "Add one or more HTTPS redirect URIs (or http://localhost for testing) in the integration settings.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "order": 4,
+      "title": "Implement authorization request",
+      "detail": "Redirect users to https://api.notion.com/v1/oauth/authorize with client_id, redirect_uri, response_type=code, and optional scopes.",
+      "owner": "developer",
+      "url": "https://api.notion.com/v1/oauth/authorize"
+    },
+    {
+      "order": 5,
+      "title": "Exchange code for access token",
+      "detail": "POST to https://api.notion.com/v1/oauth/token with grant_type=authorization_code, code, redirect_uri, and a Basic Authorization header containing base64‑encoded client_id:client_secret.",
+      "owner": "developer",
+      "url": "https://api.notion.com/v1/oauth/token"
+    },
+    {
+      "order": 6,
+      "title": "Store and use the access token",
+      "detail": "Save the returned access token and include it as a Bearer token in API requests to Notion endpoints.",
+      "owner": "developer",
+      "url": null
+    }
+  ],
+  "scopes": [
+    {
+      "scope": "pages.read",
+      "purpose": "Read page content",
+      "triggers_review": false,
+      "notes": "Standard read scope."
+    },
+    {
+      "scope": "pages.write",
+      "purpose": "Create or update page content",
+      "triggers_review": false,
+      "notes": "Standard write scope."
+    },
+    {
+      "scope": "databases.read",
+      "purpose": "Read database structures",
+      "triggers_review": false,
+      "notes": "Standard read scope."
+    },
+    {
+      "scope": "databases.write",
+      "purpose": "Create or modify databases",
+      "triggers_review": false,
+      "notes": "Standard write scope."
+    },
+    {
+      "scope": "offline",
+      "purpose": "Refresh tokens for long‑term access",
+      "triggers_review": true,
+      "notes": "Requires review for offline access."
+    }
+  ],
+  "blockers": [],
+  "agent_can_do": [
+    "Navigate public docs pages",
+    "Verify endpoint availability via HTTP GET"
+  ],
+  "developer_must_do": [
+    "Create Notion integration in portal",
+    "Configure redirect URIs",
+    "Implement OAuth flow according to Notion docs"
+  ],
+  "claims_evidence": [
+    {
+      "claim": "The OAuth authorization endpoint is https://api.notion.com/v1/oauth/authorize.",
+      "confidence": "agent_checked",
+      "source_url": "https://api.notion.com/v1/oauth/authorize",
+      "supporting_quote": null
+    },
+    {
+      "claim": "The OAuth token endpoint is https://api.notion.com/v1/oauth/token.",
+      "confidence": "unverified",
+      "source_url": "https://developers.notion.com/guides/get-started/authorization",
+      "supporting_quote": null
+    },
+    {
+      "claim": "Development mode allows up to 1,000 users and tokens expire after 60 days.",
+      "confidence": "unverified",
+      "source_url": null,
+      "supporting_quote": null
+    },
+    {
+      "claim": "Composio-managed OAuth is available for Notion.",
+      "confidence": "sourced",
+      "source_url": "https://docs.composio.dev/toolkits/notion",
+      "supporting_quote": "Composio-managed OAuth available"
+    }
+  ],
+  "sources": [
+    {
+      "title": "Notion OAuth documentation",
+      "url": "https://developers.notion.com/guides/get-started/authorization"
+    },
+    {
+      "title": "Composio Notion toolkit",
+      "url": "https://docs.composio.dev/toolkits/notion"
+    }
+  ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Developer can start with Composio-managed OAuth; own app needed only for production branding, custom scopes or rate limits.",
+    "confidence": "sourced",
+    "source_url": "https://docs.composio.dev/toolkits/notion",
+    "supporting_quote": "Composio-managed OAuth available"
+  },
+  "agent_attempts": [
+    {
+      "action": "GET OAuth docs: https://developers.notion.com/guides/get-started/authorization",
+      "result": "loads without login",
+      "evidence": "status 200; final https://developers.notion.com/guides/get-started/authorization; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-29T05:53:10.104Z"
+    },
+    {
+      "action": "GET authorize endpoint with dummy client_id: https://api.notion.com/v1/oauth/authorize",
+      "result": "endpoint responds (HTTP 200)",
+      "evidence": "final https://app.notion.com/install-integration?response_type=code&client_id=oauth-setup-navigator-dummy-client&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&state=probe; redirects 302; body: \"Notion\"",
+      "timestamp": "2026-10-29T05:53:10.642Z"
+    },
+    {
+      "action": "GET https://api.notion.com/.well-known/openid-configuration",
+      "result": "not available (HTTP 400)",
+      "evidence": "",
+      "timestamp": "2026-10-29T05:53:10.937Z"
+    },
+    {
+      "action": "GET https://api.notion.com/.well-known/oauth-authorization-server",
+      "result": "not available (HTTP 400)",
+      "evidence": "",
+      "timestamp": "2026-10-29T05:53:11.246Z"
+    }
+  ],
+  "meta": {
+    "generated_by": "agent",
+    "generated_at": "2026-10-29T05:53:11.248Z",
+    "last_checked": "2026-10-29T05:53:11.248Z",
+    "models_used": [
+      "groq:openai/gpt-oss-20b",
+      "groq:openai/gpt-oss-120b"
+    ]
+  }
+}

@@ -462,9 +462,26 @@ function slimFriction(friction) {
   return { ...friction, issues: friction.issues.slice(0, FRICTION_ISSUES_KEPT) };
 }
 
+// Fields the system or a human fills in. They stay out of the schema shown to the model: it fills in what it sees (e.g. null for
+// verified_with), which fails validation and forces a ~7k-token retry that cannot fit the per-minute budget.
+const TOP_LEVEL_SYSTEM_FIELDS = new Set(['agent_attempts', 'meta', 'notes']); // nested "notes" fields are ordinary required strings
+const ANY_LEVEL_SYSTEM_FIELDS = new Set(['verified_with', 'verification_method', 'skipped_stages']);
+function stripSystemFields(node, root = true) {
+  if (Array.isArray(node)) return node.map((n) => stripSystemFields(n, false));
+  if (!node || typeof node !== 'object') return node;
+  const drop = (name) => ANY_LEVEL_SYSTEM_FIELDS.has(name) || (root && TOP_LEVEL_SYSTEM_FIELDS.has(name));
+  const out = {};
+  for (const [k, v] of Object.entries(node)) {
+    if (k === 'properties') out[k] = Object.fromEntries(Object.entries(v).filter(([name]) => !drop(name)).map(([name, sub]) => [name, stripSystemFields(sub, false)]));
+    else if (k === 'required') out[k] = v.filter((name) => !drop(name));
+    else out[k] = stripSystemFields(v, false);
+  }
+  return out;
+}
+
 async function writeGuide({ subject, target, notes, composio, attempts, publicAttempts, seenUrls, rawByUrl, modelsUsed, onModel, onLog, deadline }) {
   const today = new Date().toISOString();
-  const jsonSchema = z.toJSONSchema(GuideSchema, { unrepresentable: 'any' });
+  const jsonSchema = stripSystemFields(z.toJSONSchema(GuideSchema, { unrepresentable: 'any' }));
 
   const numberedAttempts = attempts.map((a, i) => ({ attempt: i + 1, url: a.url, action: a.action, result: a.result, evidence: String(a.evidence ?? '').slice(0, 160) }));
   const sources = citedSources(notes, attempts, rawByUrl);
@@ -514,7 +531,7 @@ ${sources.urls.join('\n')}`;
   const warnings = [];
 
   const ask = async () => {
-    const out = await complete({ system: AGENT_RULES, messages, maxTokens: 6000, onProvider: onModel, model: GROQ_MODEL, expectedOut: 2500, providers: ['groq', 'gemini'], deadline, label: 'Writing guide', onLog });
+    const out = await complete({ system: AGENT_RULES, messages, maxTokens: 6000, onProvider: onModel, model: GROQ_MODEL, expectedOut: 1500, providers: ['groq', 'gemini'], deadline, label: 'Writing guide', onLog });
     return out.text;
   };
 
@@ -562,6 +579,7 @@ ${sources.urls.join('\n')}`;
     // downgrading below: a retry replays the whole conversation (~7k tokens), which cannot fit a ~8k tokens/minute
     // budget without a ~60s wait.
     if (!lastChance && !candidate) {
+      warnings.push(`stage 7 output failed validation and was retried: ${problems.slice(0, 4).join('; ').slice(0, 300)}`);
       messages.push({ role: 'assistant', content: raw });
       messages.push({ role: 'user', content: `Your JSON failed validation. Fix every problem and return the full corrected JSON object only:\n- ${problems.join('\n- ')}` });
       try {

@@ -1,0 +1,217 @@
+{
+  "app": {
+    "name": "Calendly",
+    "website": "https://calendly.com",
+    "category": "Scheduling"
+  },
+  "tier": "instant",
+  "product_tiers": [
+    {
+      "product": "Calendly API",
+      "tier": "instant",
+      "notes": "OAuth registration is self‑serve with no review required."
+    }
+  ],
+  "summary": "Calendly provides a self‑serve OAuth registration portal that requires login via GitHub or Google, supports standard scopes without review, and issues tokens that expire after 30 days.",
+  "time": {
+    "setup_minutes_estimate": null,
+    "setup_confidence": "unverified",
+    "setup_notes": "Official docs do not publish an estimated setup time.",
+    "approval_wait": {
+      "label": "None for basic install · Marketplace: not published",
+      "confidence": "unverified",
+      "min_days": null,
+      "max_days": null,
+      "notes": "Calendly does not require an OAuth app review; no public wait time is documented."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "Calendly developer account (sign‑up with GitHub or Google)",
+      "required": true,
+      "notes": "Login is required to access the OAuth app creation page."
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "Create a Calendly developer account",
+      "detail": "Visit the developer portal and sign up using GitHub or Google credentials.",
+      "owner": "developer",
+      "url": "https://developer.calendly.com"
+    },
+    {
+      "order": 2,
+      "title": "Register a new OAuth application",
+      "detail": "In the portal, click “Create a new OAuth application”, provide a name, select environment (Sandbox or Production), and enter a redirect URI (HTTPS for Production, HTTP localhost allowed for Sandbox).",
+      "owner": "developer",
+      "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app"
+    },
+    {
+      "order": 3,
+      "title": "Select required scopes",
+      "detail": "Choose from users:read, webhooks:read, webhooks:write, scheduled_events:read based on the functionality needed.",
+      "owner": "developer",
+      "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app"
+    },
+    {
+      "order": 4,
+      "title": "Save the client ID and client secret",
+      "detail": "After registration, copy the generated client ID and client secret for use in your application.",
+      "owner": "developer",
+      "url": null
+    },
+    {
+      "order": 5,
+      "title": "Implement OAuth flow",
+      "detail": "Use the authorization endpoint https://auth.calendly.com/oauth/authorize and token endpoint https://auth.calendly.com/oauth/token with PKCE (S256) to obtain access tokens.",
+      "owner": "developer",
+      "url": "https://auth.calendly.com/oauth/authorize"
+    }
+  ],
+  "scopes": [
+    {
+      "scope": "users:read",
+      "purpose": "Read basic user profile information",
+      "triggers_review": false,
+      "notes": "Standard read‑only scope."
+    },
+    {
+      "scope": "webhooks:read",
+      "purpose": "Read webhook subscription details",
+      "triggers_review": false,
+      "notes": "Standard read‑only scope."
+    },
+    {
+      "scope": "webhooks:write",
+      "purpose": "Create and manage webhook subscriptions",
+      "triggers_review": false,
+      "notes": "Standard write scope."
+    },
+    {
+      "scope": "scheduled_events:read",
+      "purpose": "Read scheduled event data",
+      "triggers_review": false,
+      "notes": "Standard read‑only scope."
+    }
+  ],
+  "blockers": [],
+  "agent_can_do": [
+    "navigate developer portal",
+    "verify endpoint availability"
+  ],
+  "developer_must_do": [
+    "register OAuth app",
+    "configure redirect URIs",
+    "select appropriate scopes",
+    "implement PKCE flow"
+  ],
+  "claims_evidence": [
+    {
+      "claim": "Calendly provides an OAuth app registration page at https://developer.calendly.com/docs/authentication/creating-an-oauth-app.",
+      "confidence": "sourced",
+      "source_url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "supporting_quote": "Create a new OAuth application + Provide name of your application + Select the kind of application (web or native) + Select your environment that you want to associate your application Sandbox Production"
+    },
+    {
+      "claim": "Redirect URIs must use HTTPS for Production environments and may use HTTP only for localhost in Sandbox.",
+      "confidence": "sourced",
+      "source_url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "supporting_quote": "Redirect URI: For the Sandbox environment, we allow HTTP with localhost domain. Example: For the Production environment, this must be HTTPS"
+    },
+    {
+      "claim": "Calendly OAuth tokens expire after 30 days.",
+      "confidence": "unverified",
+      "source_url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "supporting_quote": null
+    },
+    {
+      "claim": "Calendly does not require an OAuth app review for standard scopes.",
+      "confidence": "unverified",
+      "source_url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "supporting_quote": null
+    },
+    {
+      "claim": "Supported scopes are users:read, webhooks:read, webhooks:write, scheduled_events:read.",
+      "confidence": "unverified",
+      "source_url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "supporting_quote": null
+    },
+    {
+      "claim": "Composio offers a managed OAuth credential for Calendly.",
+      "confidence": "unverified",
+      "source_url": "https://docs.composio.dev/toolkits/calendly",
+      "supporting_quote": null
+    }
+  ],
+  "sources": [
+    {
+      "title": "Calendly OAuth app creation documentation",
+      "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app"
+    },
+    {
+      "title": "Composio Calendly toolkit",
+      "url": "https://docs.composio.dev/toolkits/calendly"
+    }
+  ],
+  "composio_managed_auth": {
+    "available": true,
+    "notes": "Composio provides a managed OAuth credential for Calendly.",
+    "confidence": "unverified",
+    "source_url": "https://docs.composio.dev/toolkits/calendly",
+    "supporting_quote": null
+  },
+  "agent_attempts": [
+    {
+      "action": "GET developer portal: https://developer.calendly.com",
+      "result": "loads without login",
+      "evidence": "status 200; final https://developer.calendly.com/docs/getting-started/overview; redirects 307; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-29T05:54:39.505Z"
+    },
+    {
+      "action": "GET OAuth app registration page: https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "result": "loads without login",
+      "evidence": "status 200; final https://developer.calendly.com/docs/authentication/creating-an-oauth-app; login-redirect=false password-field=false; no paywall/contact-sales phrases",
+      "timestamp": "2026-10-29T05:54:40.413Z"
+    },
+    {
+      "action": "GET authorize endpoint with dummy client_id: https://auth.calendly.com/oauth/authorize",
+      "result": "endpoint responds (HTTP 200)",
+      "evidence": "final https://calendly.com/app/login; redirects 301>302; body: \"Calendly\"",
+      "timestamp": "2026-10-29T05:54:41.684Z"
+    },
+    {
+      "action": "GET https://developer.calendly.com/.well-known/openid-configuration",
+      "result": "not available (HTTP 406)",
+      "evidence": "",
+      "timestamp": "2026-10-29T05:54:42.213Z"
+    },
+    {
+      "action": "GET https://developer.calendly.com/.well-known/oauth-authorization-server",
+      "result": "discovery document found",
+      "evidence": "issuer=https://developer.calendly.com; authorization_endpoint=https://developer.calendly.com/_mcp/oauth/authorize; token_endpoint=https://developer.calendly.com/_mcp/oauth/token; scopes_supported(0)=not listed",
+      "timestamp": "2026-10-29T05:54:42.576Z"
+    },
+    {
+      "action": "GET https://auth.calendly.com/.well-known/openid-configuration",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-29T05:54:42.852Z"
+    },
+    {
+      "action": "GET https://auth.calendly.com/.well-known/oauth-authorization-server",
+      "result": "not available (HTTP 404)",
+      "evidence": "",
+      "timestamp": "2026-10-29T05:54:43.125Z"
+    }
+  ],
+  "meta": {
+    "generated_by": "agent",
+    "generated_at": "2026-10-29T05:54:43.126Z",
+    "last_checked": "2026-10-29T05:54:43.126Z",
+    "models_used": [
+      "groq:openai/gpt-oss-20b",
+      "groq:openai/gpt-oss-120b"
+    ]
+  }
+}

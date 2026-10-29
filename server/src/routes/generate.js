@@ -37,6 +37,15 @@ router.post('/generate', rateLimit({ max: 5, windowMs: 10 * 60_000 }), async (re
     const skipped = (result.timings?.stages || []).filter((s) => s.status === 'skipped').map((s) => s.stage);
     if (skipped.length) result.guide.meta.skipped_stages = skipped;
     saveGeneratedGuide(result.slug, result.guide);
+    for (const w of result.warnings || []) console.log(`  warning: ${w}`);
+    if (result.timings) {
+      const t = result.timings;
+      console.log(`generated "${result.slug}" in ${(t.total_ms / 1000).toFixed(1)}s`);
+      for (const st of t.stages) {
+        const calls = st.calls.map((c) => `${c.model ?? '-'} in=${c.tokensIn ?? '?'} out=${c.tokensOut ?? '?'} waits=${JSON.stringify(c.waits)}${c.failures?.length ? ` failures=${JSON.stringify(c.failures).slice(0, 200)}` : ''}${c.error ? ` ERROR ${c.error}` : ''}`);
+        console.log(`  ${st.stage.padEnd(32)} ${st.status.padEnd(9)} ${((st.ms ?? 0) / 1000).toFixed(1)}s llm-wait ${(st.llm_wait_ms / 1000).toFixed(1)}s ${calls.join(' ; ')}`);
+      }
+    }
     send('result', { slug: result.slug, cached: false, partial: Boolean(result.partial), warnings: result.warnings, guide: result.guide });
   } catch (e) {
     send('error', { error: e.message.split('\n')[0] });

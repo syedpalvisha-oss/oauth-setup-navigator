@@ -49,8 +49,11 @@ async function reserveTokens(model, tokens, deadline) {
     }
     const wait = Math.max(until - now, 250) + 100;
     if (deadline && now + wait > deadline) throw new DeadlineError(`TPM budget for ${model} would need a ${Math.round(wait / 1000)}s wait past the deadline`);
-    await sleep(wait);
-    waitedMs += wait;
+    // Sleep in short steps and re-check: reservations are corrected to actual usage when other calls finish,
+    // which can free budget long before the pessimistic wait computed above would end.
+    const step = Math.min(wait, 1000);
+    await sleep(step);
+    waitedMs += step;
   }
   const entry = { at: Date.now(), tokens };
   win.push(entry);
@@ -220,6 +223,12 @@ export async function complete({ system, messages, maxTokens = 4096, onProvider 
           return result;
         } catch (e) {
           if (e instanceof DeadlineError) throw e;
+          // A call that failed for a reason other than rate limiting (e.g. tool_use_failed) used no budget: give the reservation back.
+          if (reservation && !e.rateLimited) {
+            const w = tpmWindow.get(m);
+            const i = w ? w.indexOf(reservation.entry) : -1;
+            if (i >= 0) w.splice(i, 1);
+          }
           failures.push(`${p.name}${p.name === 'groq' ? `(${m})` : ''}: ${e.message}`);
           if (e.unconfigured) continue;
           if (e.rateLimited) retryable = true;
