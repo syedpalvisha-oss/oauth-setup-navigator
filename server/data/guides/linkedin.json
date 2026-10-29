@@ -172,10 +172,10 @@
   ],
   "composio_managed_auth": {
     "available": true,
-    "notes": "Composio's LinkedIn toolkit lists managed auth. This is a Composio marketing page rather than its docs, and it does not say which LinkedIn products the managed app covers.",
-    "confidence": "sourced",
+    "notes": "Composio's LinkedIn toolkit page lists managed auth, but it is a Composio marketing page, not docs.composio.dev, and it does not say which LinkedIn products the managed app covers. Unverified until the docs confirm it.",
+    "confidence": "unverified",
     "source_url": "https://composio.dev/toolkits/linkedin/framework/claude-code",
-    "supporting_quote": "Managed auth Connect Linkedinwithout auth hassles We manage OAuth, API keys, token refresh, and scopes — you just build."
+    "supporting_quote": null
   },
   "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
 }
