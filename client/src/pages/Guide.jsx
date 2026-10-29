@@ -201,7 +201,7 @@ export default function Guide({ slug }) {
           <div className="row between">
             <div className="row">
               <TierBadge tier={g.tier} />
-              <VerifiedTag generatedBy={g.meta.generated_by} />
+              <VerifiedTag generatedBy={g.meta.generated_by} method={g.meta.verification_method} />
             </div>
             <ShareButton />
           </div>
@@ -212,7 +212,7 @@ export default function Guide({ slug }) {
           </p>
         </div>
         <div className="metrics">
-          <Metric label="Setup time" value={setup} confidence={g.time.setup_confidence} />
+          <Metric label="Setup time" value={setup} note={g.time.setup_notes} confidence={g.time.setup_confidence} />
           <Metric label="Approval wait" value={wait} note={g.time.approval_wait.notes} confidence={g.time.approval_wait.confidence} long={Boolean(g.time.approval_wait.label)} />
         </div>
         {note && (
@@ -311,6 +311,26 @@ export default function Guide({ slug }) {
                 <div className="grow">
                   <div className="item-title">{b.issue} {b.confidence && <ConfidencePill level={b.confidence} />}</div>
                   <div className="item-detail">{b.how_to_resolve}</div>
+                  {b.verified_with && <div className="small sub">Verified: {b.verified_with}</div>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {g.notes?.length > 0 && (
+        <Section title="Good to know">
+          <ul className="list">
+            {g.notes.map((n) => (
+              <li key={n.title}>
+                <div className="grow">
+                  <div className="row between" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
+                    <span className="item-title">{n.title}</span>
+                    <ConfidencePill level={n.confidence} />
+                  </div>
+                  <div className="item-detail">{n.text}</div>
+                  {n.verified_with && <div className="small sub">Verified: {n.verified_with}</div>}
                 </div>
               </li>
             ))}
@@ -345,6 +365,7 @@ export default function Guide({ slug }) {
                 </div>
                 {c.source_url && <div className="claim-link"><a href={c.source_url} target="_blank" rel="noreferrer">{c.source_url}</a></div>}
                 {c.confidence === 'sourced' && c.supporting_quote && <blockquote className="quote">“{c.supporting_quote}”</blockquote>}
+                {c.verified_with && <div className="small sub">Verified: {c.verified_with}</div>}
               </div>
             </li>
           ))}

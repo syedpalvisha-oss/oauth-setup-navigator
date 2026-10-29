@@ -22,8 +22,9 @@ export function ConfidencePill({ level }) {
   return <span className={`pill ${c.cls}`}>{c.label}</span>;
 }
 
-export function VerifiedTag({ generatedBy }) {
-  return generatedBy === 'human_verified' ? <span className="tag human">✓ Human verified</span> : <span className="tag">Agent generated</span>;
+export function VerifiedTag({ generatedBy, method }) {
+  // "human_verified" guides were set up by a person (or a supervised agent) end to end, which is what the "tested" level means.
+  return generatedBy === 'human_verified' ? <span className="tag human" title={method}>{'✓'} Tested</span> : <span className="tag">Agent generated</span>;
 }
 
 export function Legend() {

@@ -13,3 +13,18 @@ After caching ~4,000 chars per page for verification (stages 1-5 still see 900 c
 | Regenerated, decoupled verification | 2 | 0 | 6 |
 
 Decoupling recovered most of the sourced claims (0 to 2) but not all of them. The remaining downgrades are quotes the model wrote that do not appear on the cached page, so the sourced count is now limited by what the model copies rather than by what the checker can see. Moving stage 4 to the 20b model only shifted a 60s token-budget wait from stage 7 to stage 4.
+
+## GitHub OAuth App: what the draft said vs. what a real setup showed
+A supervised browser agent (Claude in Chrome) registered a real GitHub OAuth App on 2026-10-29 and then deleted it. The agent-written draft was mostly right about the flow but wrong or silent on details that only show up in the form itself:
+
+| Topic | Draft said | The test showed |
+|---|---|---|
+| Callback URL | One "authorization callback URL" field (the prerequisite and the registration claim both used the singular) | A "Redirect URIs" list of up to 10 entries, with an optional "Allow wildcard matching" checkbox. At least one is required |
+| localhost | "Not stated on the registration page" (marked unverified) | Accepted: a localhost URL with a port, and one with a port and a path, both went through with no warning |
+| Setup time | About 5 minutes (unverified estimate) | Registration took about 30 seconds; about 1 minute including reading the form |
+| Approval wait | None, but unverified ("the docs describe no review") | None: the app was live the moment it was registered. The only related option is an optional Marketplace listing button |
+| Client secret | Step 3 implied it comes with registration | Nothing is generated at registration; the settings page has a "Generate a new client secret" button |
+| Scopes | Listed scopes as part of setup | No scope field at registration; scopes are requested at login by the app |
+| Org restrictions | "Organizations can restrict third-party apps" (unverified) | Observed a test org whose policy reads "Access restricted: only approved apps can access org data". A member actually being blocked was not exercised |
+
+Confirmed unchanged: "Expire user access tokens" is on by default. Lessons: the registration form is the source of truth, so UI wording ("callback URL" vs "Redirect URIs") drifts from the docs; and "not stated in the docs" claims are cheap to settle with a minute of hands-on testing, so a short supervised run beats a long list of unverified claims.

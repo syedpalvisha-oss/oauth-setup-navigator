@@ -1,22 +1,44 @@
 {
-  "app": { "name": "GitHub", "website": "https://github.com", "category": "developer_tools" },
+  "app": {
+    "name": "GitHub",
+    "website": "https://github.com",
+    "category": "developer_tools"
+  },
   "tier": "instant",
-  "summary": "OAuth App credentials in about 5 minutes with no review step documented; organizations may still need to approve access to their data.",
+  "summary": "OAuth App credentials in about 1 minute with no review step; organizations that restrict third-party apps may still need an owner to approve your app before you can access their data.",
   "time": {
-    "setup_minutes_estimate": 5,
-    "setup_confidence": "unverified",
+    "setup_minutes_estimate": 1,
+    "setup_confidence": "tested",
+    "setup_notes": "Registration itself took about 30 seconds in a supervised test (Supervised browser agent (Claude in Chrome), 2026-10-29); about 1 minute including reading the form. This does not include writing the OAuth flow in your app.",
     "approval_wait": {
+      "label": "None",
       "min_days": 0,
       "max_days": 0,
-      "notes": "The registration docs describe no review. Organizations with third-party app restrictions require an owner to approve the app (unverified: wait depends on the owner).",
-      "confidence": "unverified"
+      "confidence": "tested",
+      "notes": "The app was live the moment it was registered; there is no review step for the developer's own app (Supervised browser agent (Claude in Chrome), 2026-10-29). Organization owners can still gate access to org data separately."
     }
   },
   "prerequisites": [
-    { "item": "GitHub account", "required": true, "notes": "Register under a personal account or an organization you own." },
-    { "item": "Homepage URL", "required": true, "notes": "Full URL to your app's website." },
-    { "item": "Authorization callback URL", "required": true, "notes": "Up to 10 per app. Whether http://localhost is accepted is not stated on the registration page." },
-    { "item": "Organization owner approval", "required": false, "notes": "Only for orgs that restrict third-party app access and only to read their private data." }
+    {
+      "item": "GitHub account",
+      "required": true,
+      "notes": "Register under a personal account or an organization you own."
+    },
+    {
+      "item": "Homepage URL",
+      "required": true,
+      "notes": "Full URL to your app's website."
+    },
+    {
+      "item": "Redirect URI",
+      "required": true,
+      "notes": "At least one is required; the form takes a list of up to 10, with optional wildcard matching. http://localhost URLs are accepted."
+    },
+    {
+      "item": "Organization owner approval",
+      "required": false,
+      "notes": "Only for orgs that restrict third-party app access and only to read their private data."
+    }
   ],
   "steps": [
     {
@@ -29,21 +51,21 @@
     {
       "order": 2,
       "title": "Enter app details",
-      "detail": "Provide application name, homepage URL and authorization callback URL. Only use information you consider public. Optionally enable Device Flow. Click Register application.",
+      "detail": "Provide the application name, the homepage URL and at least one redirect URI (add more to the list if you need them). Only use information you consider public. Device Flow is optional and off by default. Click Register application; the app is live immediately.",
       "owner": "developer",
       "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
     },
     {
       "order": 3,
       "title": "Generate and store the client secret",
-      "detail": "Copy the Client ID, generate a client secret and keep both in environment variables, never in client-side code.",
+      "detail": "Registration does not create a secret. On the new app settings page, copy the Client ID, click \"Generate a new client secret\", and keep both in environment variables, never in client-side code.",
       "owner": "developer",
       "url": null
     },
     {
       "order": 4,
       "title": "Decide on expiring user tokens",
-      "detail": "'Expire user access tokens' is enabled by default. Leave it on and implement refresh tokens unless your app cannot yet handle short-lived tokens.",
+      "detail": "'Expire user access tokens' is checked by default. Leave it on and implement refresh tokens unless your app cannot yet handle short-lived tokens.",
       "owner": "agent",
       "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
     },
@@ -63,15 +85,37 @@
     }
   ],
   "scopes": [
-    { "scope": "read:user", "purpose": "Read the user's profile data.", "triggers_review": false, "notes": "Enough for basic sign-in." },
-    { "scope": "user:email", "purpose": "Read the user's email addresses.", "triggers_review": false, "notes": "Needed when the primary email is private." },
-    { "scope": "public_repo", "purpose": "Access public repositories.", "triggers_review": false, "notes": "Prefer over repo when private access is unnecessary." },
-    { "scope": "repo", "purpose": "Full access to public and private repositories.", "triggers_review": false, "notes": "Very broad; org owners are more likely to deny it. A GitHub App offers finer permissions." }
+    {
+      "scope": "read:user",
+      "purpose": "Read the user's profile data.",
+      "triggers_review": false,
+      "notes": "Enough for basic sign-in."
+    },
+    {
+      "scope": "user:email",
+      "purpose": "Read the user's email addresses.",
+      "triggers_review": false,
+      "notes": "Needed when the primary email is private."
+    },
+    {
+      "scope": "public_repo",
+      "purpose": "Access public repositories.",
+      "triggers_review": false,
+      "notes": "Prefer over repo when private access is unnecessary."
+    },
+    {
+      "scope": "repo",
+      "purpose": "Full access to public and private repositories.",
+      "triggers_review": false,
+      "notes": "Very broad; org owners are more likely to deny it. A GitHub App offers finer permissions."
+    }
   ],
   "blockers": [
     {
-      "issue": "Organization has third-party application restrictions enabled.",
-      "how_to_resolve": "Ask an organization owner to approve the app in the organization's OAuth app policy."
+      "issue": "Users in organizations with OAuth app access restrictions cannot grant your app access to org data until an org owner approves it.",
+      "how_to_resolve": "Ask the organization owner to approve the app under the organization's Settings → Third-party application access.",
+      "confidence": "tested",
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29. The restricted policy (\"Access restricted\": only approved apps can access org data) was observed on a test org; a member being blocked was not exercised."
     },
     {
       "issue": "You need fine-grained or per-repository permissions.",
@@ -91,45 +135,77 @@
   ],
   "claims_evidence": [
     {
-      "claim": "Registration requires application name, homepage URL and authorization callback URL; description is optional, and the page describes no review or approval step.",
-      "confidence": "sourced",
-      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
+      "claim": "Registering an OAuth App takes an application name, a homepage URL and at least one redirect URI; the app is live as soon as it is registered, with no review or approval step. The only approval-related option on the form is an optional \"List this application in the Marketplace\" button.",
+      "confidence": "tested",
+      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
     },
     {
-      "claim": "A user or organization can own up to 100 OAuth apps, each with up to 10 callback URLs.",
-      "confidence": "sourced",
-      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
+      "claim": "Redirect URIs are a list of up to 10 entries, with an optional \"Allow wildcard matching\" checkbox, rather than a single callback URL field.",
+      "confidence": "tested",
+      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
     },
     {
-      "claim": "'Expire user access tokens' is enabled by default for new OAuth Apps.",
-      "confidence": "sourced",
-      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
+      "claim": "'Expire user access tokens' is checked by default on a new OAuth App.",
+      "confidence": "tested",
+      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
     },
     {
-      "claim": "Organizations can restrict third-party OAuth app access and owners approve apps individually.",
-      "confidence": "unverified",
-      "source_url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data"
+      "claim": "No client secret is created at registration; the app settings page has a \"Generate a new client secret\" button, so the secret is generated on demand.",
+      "confidence": "tested",
+      "source_url": null,
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
+    },
+    {
+      "claim": "http://localhost redirect URIs are accepted at registration (one with a port, and one with a port and a path, were both accepted with no warning).",
+      "confidence": "tested",
+      "source_url": null,
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
+    },
+    {
+      "claim": "No scopes are chosen when registering an OAuth App; there is no scope field, and the app requests scopes at login time.",
+      "confidence": "tested",
+      "source_url": null,
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
+    },
+    {
+      "claim": "Registration took about 30 seconds from opening the form to the \"Application created successfully\" banner, so setup takes about 1 minute.",
+      "confidence": "tested",
+      "source_url": null,
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
+    },
+    {
+      "claim": "An organization whose Third-party application access policy is \"Access restricted\" only lets approved apps access org data.",
+      "confidence": "tested",
+      "source_url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data",
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
+    },
+    {
+      "claim": "A user or organization can own up to 100 OAuth apps.",
+      "confidence": "sourced",
+      "source_url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
     },
     {
       "claim": "No scope triggers a GitHub review; scope breadth only affects whether org owners approve.",
       "confidence": "unverified",
       "source_url": null
-    },
-    {
-      "claim": "http://localhost callback URLs work for development.",
-      "confidence": "unverified",
-      "source_url": null
-    },
-    {
-      "claim": "Setup takes about 5 minutes.",
-      "confidence": "unverified",
-      "source_url": null
     }
   ],
   "sources": [
-    { "title": "Creating an OAuth app", "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app" },
-    { "title": "Authorizing OAuth apps", "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps" },
-    { "title": "Managing OAuth access to your organization's data", "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data" }
+    {
+      "title": "Creating an OAuth app",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
+    },
+    {
+      "title": "Authorizing OAuth apps",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+    },
+    {
+      "title": "Managing OAuth access to your organization's data",
+      "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data"
+    }
   ],
   "composio_managed_auth": {
     "available": true,
@@ -138,5 +214,18 @@
     "source_url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
     "supporting_quote": "Composio registers and maintains OAuth apps for popular toolkits such as GitHub, Gmail, and Slack."
   },
-  "meta": { "generated_by": "agent", "generated_at": "2026-10-28T00:00:00.000Z", "last_checked": "2026-10-28T00:00:00.000Z" }
+  "meta": {
+    "generated_by": "human_verified",
+    "generated_at": "2026-10-28T00:00:00.000Z",
+    "last_checked": "2026-10-29T05:30:00.000Z",
+    "verification_method": "Supervised browser agent (Claude in Chrome) registered a real OAuth App on a test account on 2026-10-29, inspected the form and settings pages, then deleted the app."
+  },
+  "notes": [
+    {
+      "title": "OAuth App vs GitHub App",
+      "text": "Permissions: a GitHub App has fine-grained permissions (repository, organization, account, enterprise) and event subscriptions; an OAuth App requests scopes at login. Webhooks: a GitHub App has a webhook (Active toggle, URL, secret); an OAuth App has none. Install flow: a GitHub App is installed on accounts, with an optional Setup URL, 'Redirect on update' and 'Request user authorization (OAuth) during installation', and asks whether it can be installed 'Only on this account' or 'Any account'; an OAuth App has no such choice. Both share redirect URIs, device flow and token-expiry options.",
+      "confidence": "tested",
+      "verified_with": "Supervised browser agent (Claude in Chrome), 2026-10-29"
+    }
+  ]
 }

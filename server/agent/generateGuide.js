@@ -474,7 +474,7 @@ JSON Schema:
 ${JSON.stringify(jsonSchema)}
 
 Instructions:
-- Omit "agent_attempts" and "meta"; the system fills them in.
+- Omit "agent_attempts", "meta", "notes" and every "verified_with" / "verification_method" field; the system or a human fills them in.
 - "agent_checked" claims: set source_url to the exact URL that attempt probed and mention "attempt #N" in the claim text.
 - "composio_managed_auth": use the Composio findings below; confidence "sourced" only if its source_url is an official docs.composio.dev page you saw and you can add a verbatim "supporting_quote" from it, else "unverified".
 - Every "claims_evidence" entry with confidence "sourced" MUST include "supporting_quote": a verbatim excerpt (under 300 characters, copied exactly from the matching page text in "Source page excerpts" below, no ellipses or paraphrase) taken from the page at that entry's source_url, directly stating the claim. No fitting quote from that URL means "unverified" with supporting_quote null.

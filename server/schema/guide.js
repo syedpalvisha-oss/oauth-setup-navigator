@@ -46,6 +46,7 @@ const GuideObject = z.object({
     setup_minutes_estimate: z.number().nonnegative().nullable(),
     // How well the setup-time and approval-wait figures are backed. Absent on older guides (shown as unverified).
     setup_confidence: z.enum(CONFIDENCE_LEVELS).optional(),
+    setup_notes: z.string().optional(),
     approval_wait: z
       .object({
         // Headline shown instead of a numeric range when the wait is a placeholder or unpublished,
@@ -94,6 +95,7 @@ const GuideObject = z.object({
     z.object({
       issue: nonEmpty,
       how_to_resolve: nonEmpty,
+      verified_with: z.string().optional(), // how a 'tested' blocker was observed
       confidence: z.enum(CONFIDENCE_LEVELS).optional(), // 'agent_checked' for blockers found by the endpoint tests
     }),
   ),
@@ -107,8 +109,12 @@ const GuideObject = z.object({
       // Verbatim excerpt (<300 chars) from source_url's page. Required for agent-written 'sourced' claims,
       // but enforced in agent/generateGuide.js (so a bad quote downgrades the claim instead of failing the guide).
       supporting_quote: z.string().nullable().optional(),
+      verified_with: z.string().optional(), // method and date of a human/supervised test; used with confidence 'tested'
     }),
   ),
+  notes: z
+    .array(z.object({ title: nonEmpty, text: nonEmpty, confidence: z.enum(CONFIDENCE_LEVELS), verified_with: z.string().optional() }))
+    .optional(),
   sources: z.array(z.object({ title: nonEmpty, url })),
   composio_managed_auth: ComposioManagedAuthSchema.optional(),
   agent_attempts: z.array(AgentAttemptSchema).optional(),
@@ -117,6 +123,7 @@ const GuideObject = z.object({
     generated_at: z.string().datetime(),
     last_checked: z.string().datetime(),
     models_used: z.array(z.string()).optional(),
+    verification_method: z.string().optional(), // for human_verified guides: who/what tested it, and when
     skipped_stages: z.array(z.string()).optional(), // research stages that could not finish; their claims are unverified
   }),
 });
